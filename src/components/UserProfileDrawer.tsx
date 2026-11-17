@@ -19,36 +19,40 @@ interface UserProfileDrawerProps {
 
 export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ profile, onChange }) => {
   return (
-    <section className="cinematic-panel rounded-2xl p-5 sm:p-6 border border-white/[0.08] transition-all">
-      <div className="flex items-center justify-between pb-4 border-b border-white/[0.07] mb-5">
+    <section className="bg-white rounded-xl border border-[#DBEAFE] p-5 sm:p-6 shadow-xs space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-[#DBEAFE]">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-obs-850 border border-white/[0.08] flex items-center justify-center text-emerald-400">
+          <div className="w-8 h-8 rounded-lg bg-[#E9EEF6] border border-[#DBEAFE] flex items-center justify-center text-[#1E40AF]">
             <SlidersHorizontal className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-white font-sans">
-              Household Context &amp; Vulnerability Matrix
-            </h2>
-            <p className="text-[11px] text-slate-400 font-mono">
-              Calibrates exposure indices, filter calculations, and timed interventions
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold text-[#1E3A8A] font-sans">
+                Household Context &amp; Vulnerability Matrix
+              </h2>
+              <span className="text-xs font-semibold text-[#475569] bg-[#E9EEF6] px-2 py-0.5 rounded border border-[#DBEAFE]">
+                पारिवारिक स्थिति
+              </span>
+            </div>
+            <p className="text-xs text-[#475569] font-sans mt-0.5">
+              Calibrates exposure indices, filter turnover rates, and scheduled interventions
             </p>
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-2 text-[10px] font-mono text-slate-400">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-          <span>Active Profile: {profile.name}</span>
+        <div className="text-xs font-mono text-[#475569]">
+          Active Profile: <strong className="text-[#1E40AF]">{profile.name}</strong>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {/* Socioeconomic Resource Tier */}
         <div className="space-y-2">
-          <label className="text-xs font-mono text-slate-300 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
-            <Coins className="w-3.5 h-3.5 text-amber-400" />
+          <label className="text-xs font-mono font-bold text-[#1E3A8A] flex items-center gap-1.5 uppercase tracking-wider">
+            <Coins className="w-3.5 h-3.5 text-[#D97706]" />
             <span>Economic Resource Tier</span>
           </label>
-          <div className="grid grid-cols-3 gap-1 bg-obs-950 p-1 rounded-xl border border-white/[0.06]">
+          <div className="grid grid-cols-3 gap-1 bg-[#F8FAFC] p-1 rounded-lg border border-[#DBEAFE]">
             {[
               { id: 'tier1_zero_cost', label: 'Zero-Cost', desc: 'Behavioral' },
               { id: 'tier2_low_cost', label: 'Low-Cost', desc: '< $20 DIY' },
@@ -56,15 +60,16 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ profile, o
             ].map((tier) => (
               <button
                 key={tier.id}
+                type="button"
                 onClick={() => onChange({ ...profile, socioeconomicTier: tier.id as SocioeconomicTier })}
-                className={`py-2 px-1 text-center rounded-lg text-xs font-mono transition-all ${
+                className={`py-2 px-1 text-center rounded-lg text-xs font-mono transition-all min-h-[44px] ${
                   profile.socioeconomicTier === tier.id
-                    ? 'bg-obs-800 text-white border border-white/[0.1] font-semibold shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-obs-900'
+                    ? 'bg-[#1E40AF] text-white font-bold shadow-xs'
+                    : 'text-[#475569] hover:text-[#1E3A8A] hover:bg-white'
                 }`}
               >
-                <div className="text-[11px]">{tier.label}</div>
-                <div className="text-[9px] opacity-70 font-normal">{tier.desc}</div>
+                <div className="text-[11px] font-bold">{tier.label}</div>
+                <div className="text-[9px] opacity-80 font-normal">{tier.desc}</div>
               </button>
             ))}
           </div>
@@ -72,15 +77,15 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ profile, o
 
         {/* Health Vulnerabilities */}
         <div className="space-y-2">
-          <label className="text-xs font-mono text-slate-300 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
-            <Heart className="w-3.5 h-3.5 text-rose-400" />
-            <span>Pulmonary &amp; Cardiac Vulnerability</span>
+          <label className="text-xs font-mono font-bold text-[#1E3A8A] flex items-center gap-1.5 uppercase tracking-wider">
+            <Heart className="w-3.5 h-3.5 text-[#DC2626]" />
+            <span>Pulmonary &amp; Health Condition</span>
           </label>
           <div className="relative">
             <select
               value={profile.vulnerability}
               onChange={(e) => onChange({ ...profile, vulnerability: e.target.value as VulnerabilityCondition })}
-              className="w-full bg-obs-950 border border-white/[0.08] rounded-xl px-3 py-2.5 text-xs text-slate-200 font-sans focus:ring-1 focus:ring-emerald-500/50 focus:outline-none cursor-pointer appearance-none pr-8"
+              className="w-full bg-[#F8FAFC] border border-[#DBEAFE] rounded-lg px-3 py-2.5 text-xs text-[#1E3A8A] font-semibold focus:ring-2 focus:ring-[#3B82F6] focus:outline-none cursor-pointer appearance-none pr-8 min-h-[44px]"
             >
               <option value="none">Healthy / General Adult</option>
               <option value="asthma">Asthma / Hyper-reactive Bronchi</option>
@@ -88,21 +93,21 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ profile, o
               <option value="cardiovascular">Cardiovascular / Hypertension</option>
               <option value="pregnant">Maternal / Pregnant Resident</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-3 pointer-events-none" />
+            <ChevronDown className="w-4 h-4 text-[#475569] absolute right-3 top-3.5 pointer-events-none" />
           </div>
         </div>
 
         {/* Household Composition */}
         <div className="space-y-2">
-          <label className="text-xs font-mono text-slate-300 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
-            <User className="w-3.5 h-3.5 text-sky-400" />
+          <label className="text-xs font-mono font-bold text-[#1E3A8A] flex items-center gap-1.5 uppercase tracking-wider">
+            <User className="w-3.5 h-3.5 text-[#3B82F6]" />
             <span>Household Composition</span>
           </label>
           <div className="relative">
             <select
               value={profile.householdType}
               onChange={(e) => onChange({ ...profile, householdType: e.target.value as HouseholdType })}
-              className="w-full bg-obs-950 border border-white/[0.08] rounded-xl px-3 py-2.5 text-xs text-slate-200 font-sans focus:ring-1 focus:ring-emerald-500/50 focus:outline-none cursor-pointer appearance-none pr-8"
+              className="w-full bg-[#F8FAFC] border border-[#DBEAFE] rounded-lg px-3 py-2.5 text-xs text-[#1E3A8A] font-semibold focus:ring-2 focus:ring-[#3B82F6] focus:outline-none cursor-pointer appearance-none pr-8 min-h-[44px]"
             >
               <option value="single">Single Individual</option>
               <option value="couple">Adult Couple</option>
@@ -110,84 +115,84 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ profile, o
               <option value="family_with_elderly">Senior Citizens (&gt;65 yrs)</option>
               <option value="multi_generation">Multi-generational Household</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-3 pointer-events-none" />
+            <ChevronDown className="w-4 h-4 text-[#475569] absolute right-3 top-3.5 pointer-events-none" />
           </div>
         </div>
 
         {/* Housing Typology */}
         <div className="space-y-2">
-          <label className="text-xs font-mono text-slate-300 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
-            <Home className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Building Envelope &amp; Leakage</span>
+          <label className="text-xs font-mono font-bold text-[#1E3A8A] flex items-center gap-1.5 uppercase tracking-wider">
+            <Home className="w-3.5 h-3.5 text-[#1E40AF]" />
+            <span>Building Envelope &amp; Sealing</span>
           </label>
           <div className="relative">
             <select
               value={profile.housingType}
               onChange={(e) => onChange({ ...profile, housingType: e.target.value as HousingTypology })}
-              className="w-full bg-obs-950 border border-white/[0.08] rounded-xl px-3 py-2.5 text-xs text-slate-200 font-sans focus:ring-1 focus:ring-emerald-500/50 focus:outline-none cursor-pointer appearance-none pr-8"
+              className="w-full bg-[#F8FAFC] border border-[#DBEAFE] rounded-lg px-3 py-2.5 text-xs text-[#1E3A8A] font-semibold focus:ring-2 focus:ring-[#3B82F6] focus:outline-none cursor-pointer appearance-none pr-8 min-h-[44px]"
             >
               <option value="informal_unsealed">High Draft / Perimeter Window Gaps</option>
               <option value="standard_apartment_drafty">Standard Apartment (Single glazed, slight leaks)</option>
               <option value="modern_sealed_double_glazed">Modern Double-Glazed / Weather-stripped</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-3 pointer-events-none" />
+            <ChevronDown className="w-4 h-4 text-[#475569] absolute right-3 top-3.5 pointer-events-none" />
           </div>
         </div>
 
         {/* Commute Mode */}
         <div className="space-y-2">
-          <label className="text-xs font-mono text-slate-300 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
-            <Bike className="w-3.5 h-3.5 text-emerald-400" />
+          <label className="text-xs font-mono font-bold text-[#1E3A8A] flex items-center gap-1.5 uppercase tracking-wider">
+            <Bike className="w-3.5 h-3.5 text-[#16A34A]" />
             <span>Primary Commute Route</span>
           </label>
           <div className="relative">
             <select
               value={profile.commuteMode}
               onChange={(e) => onChange({ ...profile, commuteMode: e.target.value as CommuteMode })}
-              className="w-full bg-obs-950 border border-white/[0.08] rounded-xl px-3 py-2.5 text-xs text-slate-200 font-sans focus:ring-1 focus:ring-emerald-500/50 focus:outline-none cursor-pointer appearance-none pr-8"
+              className="w-full bg-[#F8FAFC] border border-[#DBEAFE] rounded-lg px-3 py-2.5 text-xs text-[#1E3A8A] font-semibold focus:ring-2 focus:ring-[#3B82F6] focus:outline-none cursor-pointer appearance-none pr-8 min-h-[44px]"
             >
-              <option value="walking">Walking / Outdoor Foot Commute</option>
+              <option value="walking">Walking / Foot Commute</option>
               <option value="bicycle">Bicycle (Aerobic Inhalation Spike)</option>
               <option value="two_wheeler_motorcycle">Motorcycle / Scooter (Direct Exhaust Plume)</option>
               <option value="open_auto_bus">Open Bus / Auto-Rickshaw</option>
               <option value="metro_transit">Underground AC Metro Transit (Filtered)</option>
               <option value="sealed_car">Private Vehicle (Cabin Recirculation)</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-3 pointer-events-none" />
+            <ChevronDown className="w-4 h-4 text-[#475569] absolute right-3 top-3.5 pointer-events-none" />
           </div>
         </div>
 
-        {/* Indoor Cooking & Asset Switch */}
+        {/* Cooking Fuel & Purifier Asset */}
         <div className="space-y-2">
-          <label className="text-xs font-mono text-slate-300 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
-            <Flame className="w-3.5 h-3.5 text-amber-500" />
-            <span>Indoor Kitchen Fuel &amp; Purifier</span>
+          <label className="text-xs font-mono font-bold text-[#1E3A8A] flex items-center gap-1.5 uppercase tracking-wider">
+            <Flame className="w-3.5 h-3.5 text-[#D97706]" />
+            <span>Kitchen Fuel &amp; Purifier Asset</span>
           </label>
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <select
                 value={profile.cookingFuel}
                 onChange={(e) => onChange({ ...profile, cookingFuel: e.target.value as any })}
-                className="w-full bg-obs-950 border border-white/[0.08] rounded-xl px-3 py-2.5 text-xs text-slate-200 font-sans focus:ring-1 focus:ring-emerald-500/50 focus:outline-none cursor-pointer appearance-none pr-8"
+                className="w-full bg-[#F8FAFC] border border-[#DBEAFE] rounded-lg px-3 py-2.5 text-xs text-[#1E3A8A] font-semibold focus:ring-2 focus:ring-[#3B82F6] focus:outline-none cursor-pointer appearance-none pr-8 min-h-[44px]"
               >
                 <option value="lpg_piped">LPG / Piped Gas</option>
                 <option value="electric_induction">Electric Induction Stove</option>
                 <option value="biomass_wood">Biomass / Firewood Chulha</option>
               </select>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-3 pointer-events-none" />
+              <ChevronDown className="w-4 h-4 text-[#475569] absolute right-3 top-3.5 pointer-events-none" />
             </div>
 
             <button
               type="button"
               onClick={() => onChange({ ...profile, hasPurifier: !profile.hasPurifier })}
-              className={`px-3 py-2.5 rounded-xl border text-xs font-mono flex items-center gap-1.5 transition-all ${
+              className={`px-3 py-2.5 rounded-lg border text-xs font-mono font-bold flex items-center gap-1.5 transition-all min-h-[44px] ${
                 profile.hasPurifier
-                  ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
-                  : 'bg-obs-950 border-white/[0.08] text-slate-400 hover:text-slate-200'
+                  ? 'bg-[#1E40AF] border-[#1E40AF] text-white shadow-xs'
+                  : 'bg-[#F8FAFC] border-[#DBEAFE] text-[#475569] hover:text-[#1E3A8A]'
               }`}
               title="Toggle mechanical HEPA unit ownership"
             >
-              <Check className={`w-3.5 h-3.5 ${profile.hasPurifier ? 'text-emerald-400' : 'opacity-20'}`} />
+              <Check className={`w-3.5 h-3.5 ${profile.hasPurifier ? 'text-white' : 'opacity-30'}`} />
               <span>HEPA Asset</span>
             </button>
           </div>

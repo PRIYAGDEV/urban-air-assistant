@@ -1,4 +1,4 @@
-export type AQICategory = 'Good' | 'Moderate' | 'Unhealthy for Sensitive' | 'Unhealthy' | 'Very Unhealthy' | 'Hazardous';
+export type AQICategory = 'Good' | 'Moderate' | 'Poor' | 'Severe' | 'Hazardous' | 'Unhealthy for Sensitive' | 'Unhealthy' | 'Very Unhealthy';
 
 export interface AirQualityData {
   city: string;

@@ -8,31 +8,26 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        serif: ['"Playfair Display"', 'Georgia', 'serif'],
         mono: ['"JetBrains Mono"', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       colors: {
-        obs: {
-          950: '#06090e',
-          900: '#0b101a',
-          850: '#111726',
-          800: '#182032',
-          750: '#1e293f',
-          700: '#273552',
-          600: '#3c4e75',
-        },
-        brand: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          500: '#10b981',
-          600: '#059669',
-          700: '#047857',
-        },
-        smog: {
-          good: '#10b981',
-          moderate: '#f59e0b',
-          unhealthy: '#f97316',
-          severe: '#ef4444',
-          hazardous: '#881337',
+        primary: '#1E40AF',
+        secondary: '#3B82F6',
+        accent: '#D97706',
+        background: '#F8FAFC',
+        card: '#FFFFFF',
+        foreground: '#1E3A8A',
+        muted: '#E9EEF6',
+        'muted-foreground': '#475569',
+        border: '#DBEAFE',
+        destructive: '#DC2626',
+        aqi: {
+          good: '#16A34A',
+          moderate: '#CA8A04',
+          poor: '#EA580C',
+          severe: '#DC2626',
+          hazardous: '#7C3AED',
         }
       }
     },

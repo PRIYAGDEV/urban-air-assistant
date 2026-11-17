@@ -6,8 +6,7 @@ import {
   RefreshCw,
   Volume2, 
   VolumeX,
-  MessageSquare,
-  Sparkles
+  MessageSquare
 } from 'lucide-react';
 import { AirQualityData, UserProfile, ChatMessage } from '../types';
 import { askGemini } from '../services/geminiService';
@@ -96,23 +95,23 @@ How can I assist your household right now? Feel free to ask about window ventila
   ];
 
   return (
-    <div className="cinematic-panel rounded-2xl p-5 sm:p-7 border border-white/[0.08] flex flex-col h-[650px]">
+    <div className="bg-white rounded-xl border border-[#DBEAFE] p-5 sm:p-7 shadow-xs flex flex-col h-[650px] space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-white/[0.07] shrink-0">
+      <div className="flex items-center justify-between pb-4 border-b border-[#DBEAFE] shrink-0">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-obs-850 border border-white/[0.08] flex items-center justify-center text-emerald-400">
-            <Bot className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-lg bg-[#E9EEF6] border border-[#DBEAFE] flex items-center justify-center text-[#1E40AF]">
+            <Bot className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-semibold text-white font-sans">
+              <h2 className="text-base font-serif font-bold text-[#1E3A8A]">
                 AuraGuard AI Atmospheric Oracle
               </h2>
-              <span className="text-[10px] font-mono tracking-wider px-1.5 py-0.5 rounded bg-white/[0.05] text-slate-300 border border-white/[0.08] uppercase">
+              <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-lg bg-[#EFF6FF] text-[#1E40AF] border border-[#BFDBFE] uppercase">
                 EPA / WHO Grounded
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 font-mono">
+            <p className="text-xs text-[#475569] font-sans mt-0.5">
               Real-time generative reasoning conditioned on local telemetry and family profile
             </p>
           </div>
@@ -122,20 +121,20 @@ How can I assist your household right now? Feel free to ask about window ventila
         <button
           type="button"
           onClick={() => setVoiceEnabled(!voiceEnabled)}
-          className={`px-2.5 py-1.5 rounded-lg border text-xs font-mono flex items-center gap-1.5 transition-colors ${
+          className={`px-3 py-1.5 rounded-lg border text-xs font-mono font-semibold flex items-center gap-1.5 transition-colors min-h-[38px] ${
             voiceEnabled
-              ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
-              : 'bg-obs-850 border-white/[0.08] text-slate-400 hover:text-slate-200'
+              ? 'bg-[#1E40AF] text-white border-[#1E40AF]'
+              : 'bg-[#F8FAFC] border-[#DBEAFE] text-[#475569] hover:text-[#1E3A8A]'
           }`}
           title="Toggle speech synthesis audio"
         >
-          {voiceEnabled ? <Volume2 className="w-3.5 h-3.5 text-emerald-400" /> : <VolumeX className="w-3.5 h-3.5" />}
+          {voiceEnabled ? <Volume2 className="w-4 h-4 text-white" /> : <VolumeX className="w-4 h-4 text-[#475569]" />}
           <span className="hidden sm:inline">{voiceEnabled ? 'Voice Active' : 'Voice Muted'}</span>
         </button>
       </div>
 
       {/* Message Ledger */}
-      <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
+      <div className="flex-1 overflow-y-auto py-3 space-y-3.5 pr-1">
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -144,7 +143,7 @@ How can I assist your household right now? Feel free to ask about window ventila
             }`}
           >
             {msg.role === 'assistant' && (
-              <div className="w-8 h-8 rounded-lg bg-obs-850 border border-white/[0.08] flex items-center justify-center text-emerald-400 shrink-0 mt-0.5">
+              <div className="w-8 h-8 rounded-lg bg-[#E9EEF6] border border-[#DBEAFE] flex items-center justify-center text-[#1E40AF] shrink-0 mt-0.5">
                 <Bot className="w-4 h-4" />
               </div>
             )}
@@ -152,16 +151,16 @@ How can I assist your household right now? Feel free to ask about window ventila
             <div
               className={`max-w-[85%] sm:max-w-[78%] rounded-xl px-4 py-3 text-xs sm:text-sm leading-relaxed ${
                 msg.role === 'user'
-                  ? 'bg-emerald-600 text-white rounded-tr-none'
-                  : 'bg-obs-950 border border-white/[0.07] text-slate-200 rounded-tl-none shadow-sm'
+                  ? 'bg-[#1E40AF] text-white rounded-tr-none shadow-xs'
+                  : 'bg-[#F8FAFC] border border-[#DBEAFE] text-[#1E3A8A] rounded-tl-none'
               }`}
             >
-              <div className="whitespace-pre-line font-sans">
+              <div className="whitespace-pre-line font-sans font-medium">
                 {msg.content}
               </div>
               <div
                 className={`text-[10px] mt-2 font-mono ${
-                  msg.role === 'user' ? 'text-emerald-100 text-right' : 'text-slate-500'
+                  msg.role === 'user' ? 'text-blue-200 text-right' : 'text-[#64748B]'
                 }`}
               >
                 {msg.timestamp}
@@ -169,7 +168,7 @@ How can I assist your household right now? Feel free to ask about window ventila
             </div>
 
             {msg.role === 'user' && (
-              <div className="w-8 h-8 rounded-lg bg-obs-800 border border-white/[0.08] flex items-center justify-center text-slate-300 shrink-0 mt-0.5">
+              <div className="w-8 h-8 rounded-lg bg-[#1E40AF] text-white flex items-center justify-center shrink-0 mt-0.5">
                 <User className="w-4 h-4" />
               </div>
             )}
@@ -178,10 +177,10 @@ How can I assist your household right now? Feel free to ask about window ventila
 
         {loading && (
           <div className="flex items-start gap-3 justify-start">
-            <div className="w-8 h-8 rounded-lg bg-obs-850 border border-white/[0.08] flex items-center justify-center text-emerald-400 shrink-0">
-              <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" />
+            <div className="w-8 h-8 rounded-lg bg-[#E9EEF6] border border-[#DBEAFE] flex items-center justify-center text-[#1E40AF] shrink-0">
+              <RefreshCw className="w-4 h-4 animate-spin text-[#1E40AF]" />
             </div>
-            <div className="bg-obs-950 border border-white/[0.07] rounded-xl rounded-tl-none px-4 py-3 text-xs text-slate-400 font-mono flex items-center gap-2">
+            <div className="bg-[#F8FAFC] border border-[#DBEAFE] rounded-xl rounded-tl-none px-4 py-3 text-xs text-[#475569] font-mono flex items-center gap-2">
               <span>Synthesizing microclimate telemetry &amp; physiological guidelines...</span>
             </div>
           </div>
@@ -190,14 +189,14 @@ How can I assist your household right now? Feel free to ask about window ventila
       </div>
 
       {/* Starter Prompts */}
-      <div className="pt-2 pb-3 flex flex-wrap gap-1.5 shrink-0">
+      <div className="pt-2 pb-1 flex flex-wrap gap-2 shrink-0">
         {starterQuestions.map((q, idx) => (
           <button
             key={idx}
             type="button"
             onClick={() => handleSend(q)}
             disabled={loading}
-            className="text-[11px] font-sans px-2.5 py-1 rounded-lg bg-obs-950 border border-white/[0.08] text-slate-300 hover:border-emerald-500/40 hover:text-emerald-300 transition-colors"
+            className="text-xs font-sans px-3 py-1.5 rounded-lg bg-[#F8FAFC] border border-[#DBEAFE] text-[#1E3A8A] hover:bg-[#EFF6FF] hover:border-[#93C5FD] transition-colors"
           >
             {q}
           </button>
@@ -210,20 +209,20 @@ How can I assist your household right now? Feel free to ask about window ventila
           e.preventDefault();
           handleSend();
         }}
-        className="flex items-center gap-2 pt-2 border-t border-white/[0.07] shrink-0"
+        className="flex items-center gap-2 pt-2 border-t border-[#DBEAFE] shrink-0"
       >
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Inquire with AuraGuard (e.g. 'How can I seal drafty windows with zero cost?')..."
+          placeholder="Ask AuraGuard (e.g. 'How can I seal drafty windows with zero cost?')..."
           disabled={loading}
-          className="flex-1 bg-obs-950 border border-white/[0.08] rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 font-sans"
+          className="flex-1 bg-[#F8FAFC] border border-[#DBEAFE] rounded-lg px-4 py-2.5 text-xs sm:text-sm text-[#1E3A8A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] font-sans min-h-[44px]"
         />
         <button
           type="submit"
           disabled={!input.trim() || loading}
-          className="p-2.5 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 transition-colors shadow-sm"
+          className="px-4 py-2.5 rounded-lg bg-[#1E40AF] text-white font-medium hover:bg-[#1D4ED8] disabled:opacity-40 transition-colors shadow-xs min-h-[44px] flex items-center justify-center"
         >
           <Send className="w-4 h-4" />
         </button>

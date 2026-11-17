@@ -60,7 +60,6 @@ export const App: React.FC = () => {
     let isMounted = true;
     setLoading(true);
 
-    // Persist selected city in localStorage so it stays selected on reload
     if (typeof window !== 'undefined') {
       localStorage.setItem('auraguard_selected_city', selectedCity.name);
     }
@@ -73,7 +72,7 @@ export const App: React.FC = () => {
         }
       })
       .catch((err) => {
-        console.error('Failed to load live air data for', selectedCity.name, err);
+        console.error('Failed to load air data:', err);
         if (isMounted) {
           setAirData(getFallbackData(selectedCity, 'Live data unavailable for this city right now'));
           setLoading(false);
@@ -94,8 +93,8 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#06090e] text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
-      {/* Header Deck */}
+    <div className="min-h-screen bg-[#F8FAFC] text-[#1E3A8A] flex flex-col font-sans selection:bg-[#3B82F6] selection:text-white">
+      {/* Top Header Deck */}
       <Header
         airData={airData}
         selectedCity={selectedCity}
@@ -104,114 +103,125 @@ export const App: React.FC = () => {
         hasApiKey={Boolean(apiKey)}
       />
 
-      {/* Main Observatory Stage */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-6">
-        {/* Multi-City Station Selector (Directly Above AQI Hero) */}
-        <CitySelector
-          selectedCity={selectedCity}
-          onCitySelect={setSelectedCity}
-          loading={loading}
-          isDemoData={airData.isDemoData}
-          errorMessage={airData.errorMessage}
-        />
+      {/* Main Container - Sections separated by 48px */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-8 space-y-12">
+        {/* Section 1: Multi-City Station Selector (Above AQI Hero) */}
+        <section aria-label="City Selector">
+          <CitySelector
+            selectedCity={selectedCity}
+            onCitySelect={setSelectedCity}
+            loading={loading}
+            isDemoData={airData.isDemoData}
+            errorMessage={airData.errorMessage}
+          />
+        </section>
 
-        {/* Environmental Telemetry Horizon */}
-        <AirQualityHero airData={airData} profile={profile} />
+        {/* Section 2: Environmental Telemetry Hero Banner & Real Diurnal Chart */}
+        <section aria-label="AQI Environmental Telemetry">
+          <AirQualityHero airData={airData} profile={profile} />
+        </section>
 
-        {/* User Profile & Lifestyle Constraints Matrix */}
-        <UserProfileDrawer profile={profile} onChange={setProfile} />
+        {/* Section 3: Household Context & Lifestyle Constraints */}
+        <section aria-label="Personal Context">
+          <UserProfileDrawer profile={profile} onChange={setProfile} />
+        </section>
 
-        {/* Cockpit Segmented Navigation Controls */}
-        <div className="cinematic-panel rounded-xl p-1.5 border border-white/[0.08] flex items-center gap-1.5 overflow-x-auto scrollbar-none">
-          <button
-            type="button"
-            onClick={() => setActiveTab('timeline')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all shrink-0 ${
-              activeTab === 'timeline'
-                ? 'bg-obs-800 text-white border border-white/[0.1] font-semibold shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-obs-900/60'
-            }`}
-          >
-            <CalendarClock className="w-4 h-4 text-emerald-400" />
-            <span>24-Hour Smog Action Protocol</span>
-          </button>
+        {/* Section 4: Operational Action Tabs & Modules */}
+        <section aria-label="Action Modules" className="space-y-6">
+          {/* Segmented Control Tabs */}
+          <div className="bg-white border border-[#DBEAFE] rounded-xl p-1.5 shadow-xs flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+            <button
+              type="button"
+              onClick={() => setActiveTab('timeline')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all shrink-0 min-h-[44px] ${
+                activeTab === 'timeline'
+                  ? 'bg-[#1E40AF] text-white shadow-xs'
+                  : 'text-[#475569] hover:text-[#1E3A8A] hover:bg-[#F8FAFC]'
+              }`}
+            >
+              <CalendarClock className="w-4 h-4" />
+              <span>24-Hour Smog Action Protocol</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('simulator')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all shrink-0 ${
-              activeTab === 'simulator'
-                ? 'bg-obs-800 text-white border border-white/[0.1] font-semibold shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-obs-900/60'
-            }`}
-          >
-            <Activity className="w-4 h-4 text-teal-400" />
-            <span>Health &amp; Counterfactual Impact</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('simulator')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all shrink-0 min-h-[44px] ${
+                activeTab === 'simulator'
+                  ? 'bg-[#1E40AF] text-white shadow-xs'
+                  : 'text-[#475569] hover:text-[#1E3A8A] hover:bg-[#F8FAFC]'
+              }`}
+            >
+              <Activity className="w-4 h-4" />
+              <span>Health &amp; Counterfactual Impact</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('diy')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all shrink-0 ${
-              activeTab === 'diy'
-                ? 'bg-obs-800 text-white border border-white/[0.1] font-semibold shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-obs-900/60'
-            }`}
-          >
-            <Wrench className="w-4 h-4 text-amber-400" />
-            <span>DIY Clean Air Lab</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('diy')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all shrink-0 min-h-[44px] ${
+                activeTab === 'diy'
+                  ? 'bg-[#1E40AF] text-white shadow-xs'
+                  : 'text-[#475569] hover:text-[#1E3A8A] hover:bg-[#F8FAFC]'
+              }`}
+            >
+              <Wrench className="w-4 h-4" />
+              <span>DIY Clean Air Lab</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('chat')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all shrink-0 ${
-              activeTab === 'chat'
-                ? 'bg-obs-800 text-white border border-white/[0.1] font-semibold shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-obs-900/60'
-            }`}
-          >
-            <Bot className="w-4 h-4 text-sky-400" />
-            <span>AuraGuard Oracle</span>
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab('chat')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all shrink-0 min-h-[44px] ${
+                activeTab === 'chat'
+                  ? 'bg-[#1E40AF] text-white shadow-xs'
+                  : 'text-[#475569] hover:text-[#1E3A8A] hover:bg-[#F8FAFC]'
+              }`}
+            >
+              <Bot className="w-4 h-4" />
+              <span>AuraGuard Oracle</span>
+            </button>
+          </div>
 
-        {/* Tab Module Display Deck */}
-        <div className="transition-all">
-          {activeTab === 'timeline' && (
-            <PersonalizedTimeline airData={airData} profile={profile} />
-          )}
+          {/* Tab Pane Display */}
+          <div>
+            {activeTab === 'timeline' && (
+              <PersonalizedTimeline airData={airData} profile={profile} />
+            )}
 
-          {activeTab === 'simulator' && (
-            <ImpactCounterfactualSimulator airData={airData} profile={profile} />
-          )}
+            {activeTab === 'simulator' && (
+              <ImpactCounterfactualSimulator airData={airData} profile={profile} />
+            )}
 
-          {activeTab === 'diy' && (
-            <DiyHacksGallery profile={profile} />
-          )}
+            {activeTab === 'diy' && (
+              <DiyHacksGallery profile={profile} />
+            )}
 
-          {activeTab === 'chat' && (
-            <AIAssistantChat airData={airData} profile={profile} apiKey={apiKey} />
-          )}
-        </div>
+            {activeTab === 'chat' && (
+              <AIAssistantChat airData={airData} profile={profile} apiKey={apiKey} />
+            )}
+          </div>
+        </section>
 
-        {/* Public Health Scientific Disclaimer */}
-        <div className="cinematic-panel rounded-xl p-4 flex items-start gap-3 text-xs text-slate-400 border border-white/[0.06]">
-          <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-          <p className="leading-relaxed font-sans">
-            <strong className="text-slate-200 font-medium">Environmental Exposure &amp; Health Disclaimer:</strong> AuraGuard AI synthesizes real-time atmospheric boundary telemetry, peer-reviewed aerosol physics, and WHO/EPA indoor guidelines. It is an exposure reduction tool and does not constitute medical diagnosis or clinical prescription. If experiencing acute bronchospasm, cyanosis, or respiratory distress, contact local emergency services immediately.
-          </p>
-        </div>
+        {/* Section 5: Public Health Medical Disclaimer */}
+        <section aria-label="Medical Disclaimer">
+          <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-xl p-4 flex items-start gap-3 text-xs text-[#1E3A8A]">
+            <AlertCircle className="w-5 h-5 text-[#3B82F6] shrink-0 mt-0.5" />
+            <p className="leading-relaxed font-sans">
+              <strong className="font-bold">Public Health &amp; Environmental Exposure Disclaimer:</strong> AuraGuard AI synthesizes real-time atmospheric boundary telemetry, peer-reviewed aerosol physics, and WHO/EPA indoor guidelines. It is an exposure reduction tool and does not constitute medical diagnosis or clinical prescription. If experiencing acute bronchospasm, persistent chest tightness, or respiratory distress, contact local emergency services immediately.
+            </p>
+          </div>
+        </section>
       </main>
 
       {/* Footer Deck */}
-      <footer className="border-t border-white/[0.08] bg-[#06090e] py-6 px-4 text-xs font-mono text-slate-500">
+      <footer className="border-t border-[#DBEAFE] bg-white py-6 px-4 text-xs font-mono text-[#475569]">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-slate-400">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>AuraGuard AI • PromptWars Challenge 6: Urban Air Quality Assistant</span>
+          <div className="flex items-center gap-2 text-[#1E3A8A]">
+            <ShieldCheck className="w-4 h-4 text-[#16A34A]" />
+            <span className="font-bold">Built for PromptWars Virtual 2026 • Challenge 6: Urban Air Quality Assistant</span>
           </div>
-          <div className="text-slate-500 text-[11px]">
+          <div className="text-[#64748B]">
             Engineered with Google Gemini GenAI &amp; Open-Meteo Global Atmospheric APIs
           </div>
         </div>

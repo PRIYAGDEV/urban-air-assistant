@@ -88,12 +88,11 @@ export const CITY_PRESETS: CityPreset[] = [
 ];
 
 export function getAQICategory(aqi: number): { category: AQICategory; color: string } {
-  if (aqi <= 50) return { category: 'Good', color: '#10b981' };
-  if (aqi <= 100) return { category: 'Moderate', color: '#f59e0b' };
-  if (aqi <= 150) return { category: 'Unhealthy for Sensitive', color: '#f97316' };
-  if (aqi <= 200) return { category: 'Unhealthy', color: '#ef4444' };
-  if (aqi <= 300) return { category: 'Very Unhealthy', color: '#b91c1c' };
-  return { category: 'Hazardous', color: '#881337' };
+  if (aqi <= 50) return { category: 'Good', color: '#16A34A' };
+  if (aqi <= 100) return { category: 'Moderate', color: '#CA8A04' };
+  if (aqi <= 200) return { category: 'Poor', color: '#EA580C' };
+  if (aqi <= 300) return { category: 'Severe', color: '#DC2626' };
+  return { category: 'Hazardous', color: '#7C3AED' };
 }
 
 // Calculate geographical distance in km using Haversine formula
