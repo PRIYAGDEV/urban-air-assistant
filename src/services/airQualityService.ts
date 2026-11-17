@@ -423,9 +423,118 @@ export const CITY_PRESETS: CityPreset[] = [
 export function getAQICategory(aqi: number): { category: AQICategory; color: string } {
   if (aqi <= 50) return { category: 'Good', color: '#16A34A' };
   if (aqi <= 100) return { category: 'Moderate', color: '#CA8A04' };
-  if (aqi <= 200) return { category: 'Poor', color: '#EA580C' };
-  if (aqi <= 300) return { category: 'Severe', color: '#DC2626' };
-  return { category: 'Hazardous', color: '#7C3AED' };
+  if (aqi <= 150) return { category: 'Unhealthy for Sensitive', color: '#EA580C' };
+  if (aqi <= 200) return { category: 'Unhealthy', color: '#DC2626' };
+  if (aqi <= 300) return { category: 'Very Unhealthy', color: '#7C3AED' };
+  return { category: 'Hazardous', color: '#7F1D1D' };
+}
+
+// Dynamically compute optimal ventilation window per city based on local solar noon and diurnal curve
+export function calculateOptimalVentilationWindow(
+  city: CityPreset,
+  hourly?: { hourLabel?: string; pm25: number; aqi?: number; time?: string }[],
+  currentAqi?: number
+): { start: string; end: string; reason: string; currentSafe: boolean } {
+  let stdMeridian = 82.5; // default IST for Indian cities
+  if (city.country === 'India') {
+    stdMeridian = 82.5;
+  } else if (city.country === 'China' || city.country === 'Singapore') {
+    stdMeridian = 120.0;
+  } else if (city.country === 'Japan') {
+    stdMeridian = 135.0;
+  } else if (city.country === 'UAE') {
+    stdMeridian = 60.0;
+  } else if (city.country === 'United Kingdom') {
+    stdMeridian = 0.0;
+  } else if (city.country === 'France' || city.country === 'Germany' || city.country === 'Italy') {
+    stdMeridian = 15.0;
+  } else if (city.country === 'Egypt') {
+    stdMeridian = 30.0;
+  } else if (city.country === 'Turkey') {
+    stdMeridian = 45.0;
+  } else if (city.country === 'Pakistan') {
+    stdMeridian = 75.0;
+  } else if (city.country === 'Thailand' || city.country === 'Indonesia') {
+    stdMeridian = 105.0;
+  } else if (city.country === 'Australia') {
+    stdMeridian = 150.0;
+  } else if (city.country === 'USA') {
+    if (city.lon < -114) stdMeridian = -120.0;
+    else if (city.lon < -100) stdMeridian = -105.0;
+    else if (city.lon < -85) stdMeridian = -90.0;
+    else stdMeridian = -75.0;
+  } else if (city.country === 'Canada') {
+    stdMeridian = -75.0;
+  } else if (city.country === 'Brazil') {
+    stdMeridian = -45.0;
+  } else if (city.country === 'Mexico') {
+    stdMeridian = -90.0;
+  } else {
+    stdMeridian = Math.round(city.lon / 15) * 15;
+  }
+
+  // 1 deg longitude = 4 minutes of solar time
+  const lonDiff = city.lon - stdMeridian;
+  // Local solar noon in minutes from midnight (12:00 = 720 minutes)
+  const solarNoonMinutes = 720 - (lonDiff * 4);
+
+  // Analyze diurnal curve: check daytime hours (11:00 to 16:00) for minimum PM2.5 trough
+  let diurnalShiftMinutes = 0;
+  if (hourly && hourly.length > 0) {
+    let minPm25 = Infinity;
+    let minHour = -1;
+    hourly.forEach((h) => {
+      let hourNum = -1;
+      if (h.time) {
+        hourNum = new Date(h.time).getHours();
+      } else if (h.hourLabel) {
+        const m = h.hourLabel.match(/(\d+)\s*(AM|PM)/i);
+        if (m) {
+          let hr = parseInt(m[1], 10);
+          if (m[2].toUpperCase() === 'PM' && hr !== 12) hr += 12;
+          if (m[2].toUpperCase() === 'AM' && hr === 12) hr = 0;
+          hourNum = hr;
+        }
+      }
+      if (hourNum >= 11 && hourNum <= 16 && h.pm25 < minPm25) {
+        minPm25 = h.pm25;
+        minHour = hourNum;
+      }
+    });
+
+    if (minHour >= 11 && minHour <= 16) {
+      const dipMinutes = minHour * 60;
+      diurnalShiftMinutes = Math.max(-25, Math.min(25, (dipMinutes - (solarNoonMinutes + 120)) * 0.25));
+    }
+  }
+
+  // Atmospheric boundary layer expands to maximum vertical dilution ~75-90 min after solar noon, lasting ~100-110 min
+  const startTotalMinutes = Math.round((solarNoonMinutes + 75 + diurnalShiftMinutes) / 5) * 5;
+  const endTotalMinutes = Math.round((solarNoonMinutes + 180 + diurnalShiftMinutes) / 5) * 5;
+
+  const startH = Math.floor(startTotalMinutes / 60) % 24;
+  const startM = startTotalMinutes % 60;
+  const endH = Math.floor(endTotalMinutes / 60) % 24;
+  const endM = endTotalMinutes % 60;
+
+  const startStr = `${String(startH).padStart(2, '0')}:${String(startM).padStart(2, '0')}`;
+  const endStr = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+
+  const noonH = Math.floor(solarNoonMinutes / 60);
+  const noonM = Math.round(solarNoonMinutes % 60);
+  const noonStr = `${noonH % 12 === 0 ? 12 : noonH % 12}:${String(noonM).padStart(2, '0')} ${noonH >= 12 ? 'PM' : 'AM'}`;
+
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const aqiVal = currentAqi ?? 160;
+  const currentSafe = currentMinutes >= startTotalMinutes && currentMinutes <= endTotalMinutes && aqiVal < 250;
+
+  return {
+    start: startStr,
+    end: endStr,
+    reason: `Solar thermal heating following local solar noon (~${noonStr}) expands the atmospheric boundary layer, dispersing ground-level particulate between ${startStr} and ${endStr}.`,
+    currentSafe
+  };
 }
 
 export interface CityVisual {
@@ -838,13 +947,13 @@ interface FetchResult<T> {
   statusCode?: number;
 }
 
-// Resilient fetch with 3 attempts, exponential backoff (2s / 4s / 8s), and 10s AbortController timeout
+// Resilient fetch with 2 attempts, backoff, and 4s AbortController timeout
 async function fetchWithRetry<T>(
   url: string,
   label: string,
-  maxAttempts: number = 3,
-  backoffMs: number[] = [2000, 4000, 8000],
-  timeoutMs: number = 10000
+  maxAttempts: number = 2,
+  backoffMs: number[] = [1000],
+  timeoutMs: number = 4000
 ): Promise<FetchResult<T>> {
   let lastError = '';
 
@@ -920,7 +1029,7 @@ async function fetchWeatherApiAirQuality(city: CityPreset): Promise<AirQualityDa
 
   const url = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${city.lat},${city.lon}&days=2&aqi=yes`;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const timeoutId = setTimeout(() => controller.abort(), 4000);
 
   console.log(`[WeatherAPI] Fetching forecast.json for ${city.name} (${city.lat}, ${city.lon})...`);
   const response = await fetch(url, { signal: controller.signal });
@@ -965,23 +1074,32 @@ async function fetchWeatherApiAirQuality(city: CityPreset): Promise<AirQualityDa
     .filter((h: any) => new Date(h.time).getTime() >= nowMs - 3600000)
     .slice(0, 12);
 
-  const hourlySlice = upcomingHours.map((h: any) => {
+  const rawHourlySlice = upcomingHours.map((h: any) => {
     const d = new Date(h.time);
     const hourNum = d.getHours();
     const hourLabel = `${hourNum % 12 === 0 ? 12 : hourNum % 12} ${hourNum >= 12 ? 'PM' : 'AM'}`;
     const hPm25 = Math.round((h.air_quality?.pm2_5 ?? pm25) * 10) / 10;
     const hAqi = computeUsAqiFromPm25(hPm25);
-    const isVent = hourNum >= 13 && hourNum <= 15;
     return {
       time: h.time,
       hourLabel,
       pm25: hPm25,
       aqi: hAqi,
-      isVentilationWindow: isVent
+      isVentilationWindow: false
     };
   });
 
-  const isCurrentVentSafe = currentHour >= 13 && currentHour <= 15 && currentAqi < 250;
+  const ventWindow = calculateOptimalVentilationWindow(city, rawHourlySlice, currentAqi);
+  const ventStartH = parseInt(ventWindow.start.split(':')[0], 10) || 13;
+  const ventEndH = parseInt(ventWindow.end.split(':')[0], 10) || 15;
+
+  const hourlySlice = rawHourlySlice.map((h: any) => {
+    const hourNum = new Date(h.time).getHours();
+    return {
+      ...h,
+      isVentilationWindow: hourNum >= ventStartH && hourNum <= ventEndH
+    };
+  });
 
   console.log(`[WeatherAPI] Succeeded for ${city.name}: PM2.5=${pm25} µg/m³, US AQI=${currentAqi} (${category})`);
 
@@ -1003,13 +1121,8 @@ async function fetchWeatherApiAirQuality(city: CityPreset): Promise<AirQualityDa
     windSpeed,
     boundaryLayerHeight,
     thermalInversionActive,
-    optimalVentilationWindow: {
-      start: '13:30',
-      end: '15:15',
-      reason: 'Solar thermal heating expands the atmospheric boundary layer, dispersing ground-level particulate.',
-      currentSafe: isCurrentVentSafe
-    },
-    hourly: hourlySlice.length > 0 ? hourlySlice : getMockHourly(pm25, currentAqi),
+    optimalVentilationWindow: ventWindow,
+    hourly: hourlySlice.length > 0 ? hourlySlice : getMockHourly(pm25, currentAqi, ventStartH),
     isLive: true,
     isDemoData: false,
     source: 'WeatherAPI.com (CAMS)'
@@ -1067,21 +1180,31 @@ async function fetchOpenMeteoAirQuality(city: CityPreset): Promise<AirQualityDat
   });
 
   const startIndex = nowIndex >= 0 ? nowIndex : 0;
-  const hourlySlice = hourlyTimes.slice(startIndex, startIndex + 12).map((t: string, idx: number) => {
+  const rawHourlySlice = hourlyTimes.slice(startIndex, startIndex + 12).map((t: string, idx: number) => {
     const d = new Date(t);
     const h = d.getHours();
     const hourLabel = `${h % 12 === 0 ? 12 : h % 12} ${h >= 12 ? 'PM' : 'AM'}`;
-    const isVent = h >= 13 && h <= 15;
     return {
       time: t,
       hourLabel,
       pm25: Math.round(hourlyPm25[startIndex + idx] ?? pm25),
       aqi: Math.round(hourlyAqi[startIndex + idx] ?? currentAqi),
-      isVentilationWindow: isVent
+      isVentilationWindow: false
     };
   });
 
-  const isCurrentVentSafe = currentHour >= 13 && currentHour <= 15 && currentAqi < 250;
+  const ventWindow = calculateOptimalVentilationWindow(city, rawHourlySlice, currentAqi);
+  const ventStartH = parseInt(ventWindow.start.split(':')[0], 10) || 13;
+  const ventEndH = parseInt(ventWindow.end.split(':')[0], 10) || 15;
+
+  const hourlySlice = rawHourlySlice.map((h: any) => {
+    const d = new Date(h.time);
+    const hourNum = d.getHours();
+    return {
+      ...h,
+      isVentilationWindow: hourNum >= ventStartH && hourNum <= ventEndH
+    };
+  });
 
   return {
     city: city.name,
@@ -1101,13 +1224,8 @@ async function fetchOpenMeteoAirQuality(city: CityPreset): Promise<AirQualityDat
     windSpeed,
     boundaryLayerHeight,
     thermalInversionActive,
-    optimalVentilationWindow: {
-      start: '13:30',
-      end: '15:15',
-      reason: 'Solar thermal heating expands the atmospheric boundary layer, dispersing ground-level particulate.',
-      currentSafe: isCurrentVentSafe
-    },
-    hourly: hourlySlice.length > 0 ? hourlySlice : getMockHourly(pm25, currentAqi),
+    optimalVentilationWindow: ventWindow,
+    hourly: hourlySlice.length > 0 ? hourlySlice : getMockHourly(pm25, currentAqi, ventStartH),
     isLive: true,
     isDemoData: false,
     source: 'Open-Meteo (CAMS)',
@@ -1142,16 +1260,20 @@ export async function fetchLiveAirQuality(city: CityPreset): Promise<AirQualityD
   }
 }
 
-function getMockHourly(basePm25: number, baseAqi: number) {
+function getMockHourly(basePm25: number, baseAqi: number, ventStartHour: number = 14) {
   const hours = ['8 AM', '10 AM', '12 PM', '2 PM (Window)', '4 PM', '6 PM', '8 PM', '10 PM'];
+  const hourNums = [8, 10, 12, 14, 16, 18, 20, 22];
   const factors = [1.3, 1.1, 0.85, 0.65, 0.9, 1.25, 1.4, 1.35];
-  return hours.map((hourLabel, i) => ({
-    time: `2026-11-17T${i + 8}:00:00Z`,
-    hourLabel,
-    pm25: Math.round(basePm25 * factors[i]),
-    aqi: Math.round(baseAqi * factors[i]),
-    isVentilationWindow: i === 3
-  }));
+  return hours.map((hourLabel, i) => {
+    const isVent = Math.abs(hourNums[i] - ventStartHour) <= 1;
+    return {
+      time: `2026-11-17T${String(hourNums[i]).padStart(2, '0')}:00:00Z`,
+      hourLabel: isVent && !hourLabel.includes('Window') ? `${hourLabel.replace(' (Window)', '')} (Window)` : (isVent ? hourLabel : hourLabel.replace(' (Window)', '')),
+      pm25: Math.round(basePm25 * factors[i]),
+      aqi: Math.round(baseAqi * factors[i]),
+      isVentilationWindow: isVent
+    };
+  });
 }
 
 export function getFallbackData(city: CityPreset, errorMessage?: string): AirQualityData {
@@ -1194,6 +1316,11 @@ export function getFallbackData(city: CityPreset, errorMessage?: string): AirQua
 
   const matched = baselines[city.name] || { aqi: 160, pm25: 95, pm10: 165, no2: 38, ozone: 35, temp: 22 };
   const { category, color } = getAQICategory(matched.aqi);
+  const ventWindow = calculateOptimalVentilationWindow(city, undefined, matched.aqi);
+  const ventStartH = parseInt(ventWindow.start.split(':')[0], 10) || 14;
+
+  const defaultError = 'Live data unavailable for this city right now';
+  const effectiveError = errorMessage || defaultError;
 
   return {
     city: city.name,
@@ -1213,17 +1340,12 @@ export function getFallbackData(city: CityPreset, errorMessage?: string): AirQua
     windSpeed: 6,
     boundaryLayerHeight: 250,
     thermalInversionActive: true,
-    optimalVentilationWindow: {
-      start: '13:30',
-      end: '15:15',
-      reason: 'Boundary layer expansion during peak sunlight disperses trapped surface smoke.',
-      currentSafe: false
-    },
-    hourly: getMockHourly(matched.pm25, matched.aqi),
+    optimalVentilationWindow: ventWindow,
+    hourly: getMockHourly(matched.pm25, matched.aqi, ventStartH),
     isLive: false,
     isDemoData: true,
-    errorMessage: errorMessage || 'Live data unavailable for this city right now',
-    lastFetchError: errorMessage ? errorMessage : undefined
+    errorMessage: effectiveError,
+    lastFetchError: effectiveError
   };
 }
 

@@ -49,12 +49,12 @@ export const App: React.FC = () => {
 
   const [hasLoadedOnce, setHasLoadedOnce] = useState<boolean>(false);
   const [airData, setAirData] = useState<AirQualityData>(() => {
-    const fb = getFallbackData(selectedCity);
+    const fb = getFallbackData(selectedCity, 'Initial connection pending / live sensor offline');
     return {
       ...fb,
-      isDemoData: false, // Don't flag as demo on fresh load while connecting
+      isDemoData: true,
       isLive: false,
-      isLoading: true
+      isLoading: false
     };
   });
   const [loading, setLoading] = useState<boolean>(true);
@@ -119,7 +119,6 @@ export const App: React.FC = () => {
   // Load fresh air quality data whenever selected city changes
   useEffect(() => {
     let isMounted = true;
-    setLoading(true);
 
     if (typeof window !== 'undefined') {
       localStorage.setItem('auraguard_selected_city', selectedCity.name);
@@ -130,10 +129,14 @@ export const App: React.FC = () => {
       const cached = cityCacheRef.current[selectedCity.name];
       baseAirDataRef.current = cached;
       setAirData(cached);
+      setLoading(false);
     } else if (hasLoadedOnce) {
       const initial = getFallbackData(selectedCity);
       baseAirDataRef.current = initial;
       setAirData(initial);
+      setLoading(true);
+    } else {
+      setLoading(true);
     }
 
     fetchLiveAirQuality(selectedCity)
@@ -143,7 +146,6 @@ export const App: React.FC = () => {
           baseAirDataRef.current = data;
           setAirData(data);
           setHasLoadedOnce(true);
-          setLoading(false);
         }
       })
       .catch((err) => {
@@ -153,6 +155,10 @@ export const App: React.FC = () => {
           baseAirDataRef.current = fallback;
           setAirData(fallback);
           setHasLoadedOnce(true);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
           setLoading(false);
         }
       });
@@ -228,6 +234,8 @@ export const App: React.FC = () => {
       });
   };
 
+  const isRealLive = !airData.isDemoData && !!airData.isLive;
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#1E3A8A] flex flex-col font-sans selection:bg-[#3B82F6] selection:text-white">
       {/* Top Header Deck */}
@@ -252,10 +260,17 @@ export const App: React.FC = () => {
         {/* Live 1-Second Auto-Refresh & Motion Photos Control Deck */}
         <div className="bg-white rounded-xl border border-[#DBEAFE] p-3 sm:p-4 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-3 animate-fade-up">
           <div className="flex items-center gap-2.5 flex-wrap">
-            {!airData.isLive || airData.isDemoData ? (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] text-xs font-mono font-bold shadow-2xs">
-                <span className="w-2 h-2 rounded-full bg-[#D97706]" />
-                <span>DEMO DATA — auto-refresh paused</span>
+            {!isRealLive ? (
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] text-xs font-mono font-bold shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-[#D97706]" />
+                  <span>DEMO DATA — auto-refresh paused</span>
+                </div>
+                {airData.lastFetchError && (
+                  <span className="text-[11px] font-mono text-[#92400E] font-medium hidden sm:inline">
+                    • Last fetch error: {airData.lastFetchError}
+                  </span>
+                )}
               </div>
             ) : (
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#F0FDF4] border border-[#86EFAC] text-[#166534] text-xs font-mono font-bold shadow-2xs">
@@ -330,7 +345,7 @@ export const App: React.FC = () => {
             </button>
 
             {/* Toggle 1s Stream Auto-Refresh or Retry Live Data if Demo */}
-            {airData.isDemoData ? (
+            {!isRealLive ? (
               <button
                 type="button"
                 onClick={handleManualRefresh}
@@ -356,7 +371,7 @@ export const App: React.FC = () => {
             )}
 
             {/* Force Sync Button */}
-            {!airData.isDemoData && (
+            {isRealLive && (
               <button
                 type="button"
                 onClick={handleManualRefresh}
@@ -376,7 +391,7 @@ export const App: React.FC = () => {
             selectedCity={selectedCity}
             onCitySelect={handleCitySelect}
             loading={loading}
-            isDemoData={airData.isDemoData}
+            isDemoData={!isRealLive}
             errorMessage={airData.errorMessage}
             lastFetchError={airData.lastFetchError}
             onRetry={handleManualRefresh}

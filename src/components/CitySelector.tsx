@@ -478,10 +478,10 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
                 <strong className="uppercase underline font-bold">calibrated historical DEMO data</strong>{' '}
                 modeled from regional winter smog baselines. This is simulated data, not real-time sensor measurements.
               </p>
-              {lastFetchError && (
+              {(lastFetchError || errorMessage) && (
                 <div className="text-[11px] font-mono text-[#B45309] font-bold mt-1.5 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#D97706]" />
-                  <span>Last fetch error: {lastFetchError}</span>
+                  <span>Last fetch error: {lastFetchError || errorMessage}</span>
                 </div>
               )}
             </div>

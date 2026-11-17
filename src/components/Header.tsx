@@ -28,6 +28,8 @@ export const Header: React.FC<HeaderProps> = ({
   cycleCountdown = 5,
   onToggleAutoCycle,
 }) => {
+  const isRealLive = !airData.isDemoData && !!airData.isLive;
+
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-[#DBEAFE] px-4 lg:px-8 py-3 shadow-xs">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -65,12 +67,12 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Right Station Controls */}
         <div className="flex items-center flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto justify-end">
           {/* Status Indicator Button */}
-          {!airData.isLive || airData.isDemoData ? (
+          {!isRealLive ? (
             <button
               type="button"
               onClick={onRetry}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-mono font-bold transition-all shadow-xs cursor-pointer bg-[#FEF3C7] hover:bg-[#FDE68A] border-[#FDE68A] text-[#92400E]"
-              title="Demo data active — click to retry live satellite telemetry"
+              title={`Demo data active${airData.lastFetchError ? ` (${airData.lastFetchError})` : ''} — click to retry live satellite telemetry`}
             >
               <span className="w-2 h-2 rounded-full bg-[#D97706]" />
               <span className="hidden md:inline">DEMO DATA — auto-refresh paused</span>

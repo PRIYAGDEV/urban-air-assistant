@@ -93,6 +93,7 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
   onRetry,
   loading = false,
 }) => {
+  const isRealLive = !airData.isDemoData && !!airData.isLive;
   const oeri = calculateOERI(airData, profile);
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
   const visual = getCityVisual(airData.city);
@@ -104,7 +105,7 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
   const displayNo2 = useCountUp(airData.no2, 650);
   const displayOzone = useCountUp(airData.ozone, 650);
 
-  // Pollutant WHO limits
+  // Pollutant WHO limits (PM2.5 / 15, PM10 / 45, NO2 / 25, Ozone / 100)
   const pollutants = [
     {
       name: 'PM2.5',
@@ -113,7 +114,7 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
       actualVal: airData.pm25,
       whoLimit: 15,
       unit: 'µg/m³',
-      ratio: Math.round((airData.pm25 / 15) * 10) / 10,
+      ratio: Math.round(((airData.pm25 ?? 0) / 15) * 10) / 10,
     },
     {
       name: 'PM10',
@@ -122,7 +123,7 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
       actualVal: airData.pm10,
       whoLimit: 45,
       unit: 'µg/m³',
-      ratio: Math.round((airData.pm10 / 45) * 10) / 10,
+      ratio: Math.round(((airData.pm10 ?? 0) / 45) * 10) / 10,
     },
     {
       name: 'NO₂',
@@ -131,7 +132,7 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
       actualVal: airData.no2,
       whoLimit: 25,
       unit: 'µg/m³',
-      ratio: Math.round((airData.no2 / 25) * 10) / 10,
+      ratio: Math.round(((airData.no2 ?? 0) / 25) * 10) / 10,
     },
     {
       name: 'Ozone',
@@ -140,7 +141,7 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
       actualVal: airData.ozone,
       whoLimit: 100,
       unit: 'µg/m³',
-      ratio: Math.round((airData.ozone / 100) * 10) / 10,
+      ratio: Math.round(((airData.ozone ?? 0) / 100) * 10) / 10,
     },
   ];
 
@@ -233,12 +234,12 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
             {/* Live Inversion Radar Badge & Timestamp */}
             <div className="flex flex-col sm:items-end gap-1.5">
               <div className="flex flex-wrap items-center gap-2">
-                {loading ? (
+                {loading && !isRealLive ? (
                   <span className="px-2.5 py-1 rounded-lg bg-[#1E40AF] text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xs">
                     <RefreshCw className="w-3 h-3 animate-spin text-white" />
                     CONNECTING TO LIVE TELEMETRY…
                   </span>
-                ) : (!airData.isLive || airData.isDemoData) ? (
+                ) : !isRealLive ? (
                   <div className="flex items-center gap-1.5">
                     <span className="px-2.5 py-1 rounded-lg bg-[#DC2626] text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xs">
                       <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
@@ -270,9 +271,9 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
                 </span>
               </div>
               {/* Show real fetch error under demo badge */}
-              {airData.isDemoData && airData.lastFetchError && (
+              {!isRealLive && (airData.lastFetchError || airData.errorMessage) && (
                 <div className="text-[10px] font-mono text-amber-200 bg-black/60 px-2 py-0.5 rounded border border-amber-500/30">
-                  Last fetch error: {airData.lastFetchError}
+                  Last fetch error: {airData.lastFetchError || airData.errorMessage}
                 </div>
               )}
             </div>
@@ -306,7 +307,7 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
               </div>
 
               <p className="text-xs sm:text-sm text-slate-300 mt-3 max-w-xl font-sans leading-relaxed">
-                {airData.category === 'Hazardous' || airData.category === 'Severe'
+                {airData.category === 'Hazardous' || airData.category === 'Severe' || airData.category === 'Very Unhealthy'
                   ? 'Severe winter atmospheric particulate entrapment. Ultrafine combustion soot is trapped at respiratory level. Outdoor exposure causes acute respiratory constriction.'
                   : 'Atmospheric particulate levels exceed safe WHO thresholds. Vulnerable residents must follow the timed indoor protocol.'}
               </p>
@@ -360,9 +361,9 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
                     <Camera className="w-3.5 h-3.5 text-[#60A5FA]" />
                     <span>Motion Photos of Cities (शहरों की लाइव मोशन तस्वीरें):</span>
                   </span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 font-bold flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                    LIVE MOTION
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-400/30 font-bold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                    MOTION PHOTO
                   </span>
                 </div>
                 <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">

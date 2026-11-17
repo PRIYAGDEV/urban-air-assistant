@@ -116,7 +116,7 @@ function generateIntelligentFallbackResponse(
   if (q.includes('asthma') || q.includes('child') || q.includes('kid') || q.includes('elderly') || q.includes('health') || q.includes('cough')) {
     return `### 🩺 Protecting High-Risk Individuals (${profile.vulnerability === 'none' ? 'General Family' : profile.vulnerability.toUpperCase()})
 
-**Current Outdoor Hazard:** ${airData.pm25} µg/m³ PM2.5 is roughly **${Math.round(airData.pm25 / 15)}x higher** than the WHO 24-hour guideline.
+**Current Outdoor Hazard:** ${airData.pm25} µg/m³ PM2.5 is roughly **${Math.round(((airData.pm25 || 0) / 15) * 10) / 10}x higher** than the WHO 24-hour guideline.
 
 **Vulnerability Precautions:**
 - **Respiratory Shielding:** Fine particles (<2.5 µm) bypass nasal cilia and penetrate deep into alveolar lung sacs, triggering bronchial inflammation and microvascular constriction.
