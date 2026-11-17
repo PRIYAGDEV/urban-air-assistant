@@ -106,7 +106,11 @@ export const App: React.FC = () => {
 
         {/* Section 2: Environmental Telemetry Hero Banner & Real Diurnal Chart */}
         <section aria-label="AQI Environmental Telemetry">
-          <AirQualityHero airData={airData} profile={profile} />
+          <AirQualityHero 
+            airData={airData} 
+            profile={profile} 
+            onCitySelect={setSelectedCity} 
+          />
         </section>
 
         {/* Section 3: Household Context & Lifestyle Constraints */}

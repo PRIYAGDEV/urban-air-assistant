@@ -53,21 +53,25 @@ export const PersonalizedTimeline: React.FC<PersonalizedTimelineProps> = ({ airD
       {/* Vertical Timeline - Left Rail with Time, Right Side with Details */}
       <div className="relative pl-4 sm:pl-6 space-y-8 before:absolute before:left-[19px] sm:before:left-[27px] before:top-4 before:bottom-4 before:w-0.5 before:bg-[#DBEAFE]">
         {cards.map((card, idx) => (
-          <div key={card.id || idx} className="relative flex flex-col md:flex-row items-start gap-4 sm:gap-6">
+          <div 
+            key={card.id || idx} 
+            className="relative flex flex-col md:flex-row items-start gap-4 sm:gap-6 animate-fade-up"
+            style={{ animationDelay: `${idx * 75}ms` }}
+          >
             {/* Timeline node marker & Time rail */}
             <div className="flex items-center gap-3 shrink-0">
-              <div className={`w-3.5 h-3.5 rounded-full border-2 bg-white z-10 ${
+              <div className={`w-3.5 h-3.5 rounded-full border-2 bg-white z-10 transition-transform duration-200 hover:scale-125 ${
                 card.urgency === 'high' ? 'border-[#DC2626] ring-4 ring-[#FEE2E2]' : 'border-[#1E40AF] ring-4 ring-[#EFF6FF]'
               }`} />
-              <div className="font-mono text-xs font-bold text-[#1E40AF] bg-[#F8FAFC] px-2.5 py-1 rounded-lg border border-[#DBEAFE] whitespace-nowrap min-w-[110px] text-center">
+              <div className="font-mono text-xs font-bold text-[#1E40AF] bg-[#F8FAFC] px-2.5 py-1 rounded-lg border border-[#DBEAFE] whitespace-nowrap min-w-[110px] text-center shadow-xs">
                 {card.timeSlot}
               </div>
             </div>
 
             {/* Right Side: Title + Description + Why it works */}
-            <div className={`flex-1 bg-[#F8FAFC] rounded-xl border p-4 sm:p-5 transition-all w-full ${
+            <div className={`flex-1 bg-[#F8FAFC] rounded-xl border p-4 sm:p-5 transition-all duration-200 w-full hover:-translate-y-0.5 hover:shadow-xs ${
               card.urgency === 'high'
-                ? 'border-[#FCA5A5] bg-[#FEF2F2]/50'
+                ? 'border-[#FCA5A5] bg-[#FEF2F2]/50 hover:border-[#F87171]'
                 : 'border-[#DBEAFE] hover:border-[#93C5FD]'
             }`}>
               {/* Header row */}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Wind, 
   Layers, 
@@ -6,28 +6,67 @@ import {
   ShieldAlert, 
   AlertTriangle,
   Info,
-  Camera
+  Camera,
+  MapPin,
+  ChevronRight
 } from 'lucide-react';
-import { AirQualityData, UserProfile } from '../types';
+import { AirQualityData, UserProfile, CityPreset } from '../types';
 import { calculateOERI } from '../services/decisionEngine';
-import { getCityVisual } from '../services/airQualityService';
+import { getCityVisual, CITY_PRESETS } from '../services/airQualityService';
 
 interface AirQualityHeroProps {
   airData: AirQualityData;
   profile: UserProfile;
+  onCitySelect?: (city: CityPreset) => void;
 }
 
-export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile }) => {
+// Smooth numerical count-up hook for cinematic telemetry transitions
+function useCountUp(target: number, duration: number = 650): number {
+  const [current, setCurrent] = useState(target);
+
+  useEffect(() => {
+    let startTimestamp: number | null = null;
+    const initial = current;
+    const diff = target - initial;
+    if (diff === 0) return;
+
+    let animationFrameId: number;
+    const step = (timestamp: number) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      // ease-out quartic
+      const ease = 1 - Math.pow(1 - progress, 4);
+      setCurrent(Math.round(initial + diff * ease));
+      if (progress < 1) {
+        animationFrameId = requestAnimationFrame(step);
+      }
+    };
+    animationFrameId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [target, duration]);
+
+  return current;
+}
+
+export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile, onCitySelect }) => {
   const oeri = calculateOERI(airData, profile);
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
   const visual = getCityVisual(airData.city);
+
+  // Smooth animated numerical metrics
+  const displayAqi = useCountUp(airData.aqi, 650);
+  const displayPm25 = useCountUp(airData.pm25, 650);
+  const displayPm10 = useCountUp(airData.pm10, 650);
+  const displayNo2 = useCountUp(airData.no2, 650);
+  const displayOzone = useCountUp(airData.ozone, 650);
 
   // Pollutant WHO limits
   const pollutants = [
     {
       name: 'PM2.5',
       fullName: 'Fine Particulate',
-      val: airData.pm25,
+      val: displayPm25,
+      actualVal: airData.pm25,
       whoLimit: 15,
       unit: 'µg/m³',
       ratio: Math.round((airData.pm25 / 15) * 10) / 10,
@@ -35,7 +74,8 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
     {
       name: 'PM10',
       fullName: 'Coarse Dust',
-      val: airData.pm10,
+      val: displayPm10,
+      actualVal: airData.pm10,
       whoLimit: 45,
       unit: 'µg/m³',
       ratio: Math.round((airData.pm10 / 45) * 10) / 10,
@@ -43,7 +83,8 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
     {
       name: 'NO₂',
       fullName: 'Nitrogen Dioxide',
-      val: airData.no2,
+      val: displayNo2,
+      actualVal: airData.no2,
       whoLimit: 25,
       unit: 'µg/m³',
       ratio: Math.round((airData.no2 / 25) * 10) / 10,
@@ -51,7 +92,8 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
     {
       name: 'Ozone',
       fullName: 'Ground Ozone (O₃)',
-      val: airData.ozone,
+      val: displayOzone,
+      actualVal: airData.ozone,
       whoLimit: 100,
       unit: 'µg/m³',
       ratio: Math.round((airData.ozone / 100) * 10) / 10,
@@ -88,16 +130,31 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
   // Ventilation window index (typically index 3 = 2 PM)
   const ventPoint = pointsCoords.find(pt => pt.data.isVentilationWindow) || pointsCoords[3];
 
+  // Featured quick vista cities with verified photos
+  const featuredVistas = [
+    'Delhi NCR',
+    'Mumbai',
+    'Bengaluru',
+    'Varanasi',
+    'Jaipur',
+    'Tokyo',
+    'London',
+    'New York',
+    'Paris'
+  ].map(name => CITY_PRESETS.find(c => c.name === name)).filter(Boolean) as CityPreset[];
+
   return (
     <div className="space-y-6">
-      {/* 1. Full-Width Real Photo Banner Hero with Overlay */}
-      <div className="relative rounded-xl overflow-hidden border border-[#DBEAFE] shadow-sm min-h-[360px] sm:min-h-[400px] flex flex-col justify-between">
-        {/* Dynamic Location-Specific Smog Photo Background with Darker Readable Overlay */}
+      {/* 1. Full-Width Real Photo Banner Hero with Cinematic Motion & Dark Overlay */}
+      <div className="relative rounded-xl overflow-hidden border border-[#DBEAFE] shadow-sm min-h-[380px] sm:min-h-[420px] flex flex-col justify-between group">
+        {/* Dynamic Location-Specific Smog Photo Background with Slow Cinematic Ken Burns Motion */}
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-700 ease-out"
+          key={visual.imagePath}
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-1000 ease-out animate-ken-burns scale-105"
           style={{ backgroundImage: `url('${visual.imagePath}')` }}
         />
-        <div className="absolute inset-0 bg-slate-900/75 backdrop-contrast-125" />
+        {/* Contrast Overlay for High Legibility */}
+        <div className="absolute inset-0 bg-slate-900/80 backdrop-contrast-125" />
 
         {/* Content on top of banner */}
         <div className="relative z-10 p-6 sm:p-8 lg:p-10 flex flex-col justify-between flex-1 text-white">
@@ -110,22 +167,28 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
                 <span>•</span>
                 <span className="text-amber-300 font-sans font-bold">आज की हवा</span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-serif font-bold text-white mt-1">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold text-white mt-1">
                 {airData.city}, <span className="font-normal text-slate-300">{airData.country}</span>
               </h1>
-              <p className="text-xs font-mono text-[#93C5FD] mt-0.5">
-                Station Landmark: {visual.landmark}
+              <p className="text-xs font-mono text-[#93C5FD] mt-0.5 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-[#60A5FA]" />
+                <span>Station Landmark: {visual.landmark}</span>
               </p>
             </div>
 
-            {/* Inversion Badge & Timestamp */}
+            {/* Live Inversion Radar Badge & Timestamp */}
             <div className="flex flex-wrap items-center gap-2">
               {airData.isDemoData ? (
-                <span className="px-2.5 py-1 rounded-lg bg-[#DC2626] text-white text-xs font-mono font-bold uppercase tracking-wider">
+                <span className="px-2.5 py-1 rounded-lg bg-[#DC2626] text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
                   DEMO DATA • SENSOR OFFLINE
                 </span>
               ) : (
-                <span className="px-2.5 py-1 rounded-lg bg-[#16A34A] text-white text-xs font-mono font-bold uppercase tracking-wider">
+                <span className="px-2.5 py-1 rounded-lg bg-[#16A34A] text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-300" />
+                  </span>
                   LIVE TELEMETRY
                 </span>
               )}
@@ -135,7 +198,7 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
             </div>
           </div>
 
-          {/* Main Huge AQI Core Readout + Dial */}
+          {/* Main Huge AQI Core Readout + Dial Gauge */}
           <div className="py-6 sm:py-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div>
               <div className="text-xs sm:text-sm font-mono uppercase tracking-widest text-slate-300">
@@ -144,17 +207,17 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
               
               <div className="flex items-baseline gap-4 mt-2">
                 <span 
-                  className="font-serif font-black text-7xl sm:text-8xl lg:text-[115px] leading-none tracking-tight"
+                  className="font-serif font-black text-7xl sm:text-8xl lg:text-[115px] leading-none tracking-tight metric-num transition-colors duration-500"
                   style={{ color: airData.color }}
                 >
-                  {airData.aqi}
+                  {displayAqi}
                 </span>
                 <div>
                   <span className="text-xl sm:text-2xl font-mono font-bold text-white block">
                     AQI
                   </span>
                   <span 
-                    className="inline-block mt-1 px-3 py-1 rounded-lg text-xs font-mono font-extrabold uppercase tracking-wider text-white"
+                    className="inline-block mt-1 px-3 py-1 rounded-lg text-xs font-mono font-extrabold uppercase tracking-wider text-white shadow-sm transition-colors duration-500"
                     style={{ backgroundColor: airData.color }}
                   >
                     {airData.category}
@@ -169,8 +232,8 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
               </p>
             </div>
 
-            {/* SVG AQI Dial Gauge */}
-            <div className="bg-black/50 border border-white/20 rounded-xl p-5 flex flex-col items-center justify-center shrink-0 w-full sm:w-auto">
+            {/* SVG AQI Dial Gauge with Animated Colored Arch */}
+            <div className="bg-black/50 border border-white/20 rounded-xl p-5 flex flex-col items-center justify-center shrink-0 w-full sm:w-auto shadow-md">
               <div className="relative w-44 h-24 flex items-center justify-center">
                 <svg viewBox="0 0 100 55" className="w-40 h-24">
                   {/* Gauge Background Arch */}
@@ -181,7 +244,7 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
                     strokeWidth="8"
                     strokeLinecap="round"
                   />
-                  {/* Gauge Colored Value Arch */}
+                  {/* Gauge Colored Value Arch with transition */}
                   <path
                     d="M 10 50 A 40 40 0 0 1 90 50"
                     fill="none"
@@ -189,7 +252,8 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
                     strokeWidth="8"
                     strokeLinecap="round"
                     strokeDasharray="126"
-                    strokeDashoffset={Math.max(0, 126 - (Math.min(airData.aqi, 500) / 500) * 126)}
+                    strokeDashoffset={Math.max(0, 126 - (Math.min(displayAqi, 500) / 500) * 126)}
+                    className="transition-all duration-700 ease-out"
                   />
                 </svg>
                 <div className="absolute bottom-1 text-center font-mono">
@@ -207,7 +271,53 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
             </div>
           </div>
 
-          {/* Photo Credit line & Landmark */}
+          {/* City Vistas Quick Photo Switcher Bar inside Hero */}
+          {onCitySelect && (
+            <div className="border-t border-white/15 pt-3 mb-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                  <Camera className="w-3.5 h-3.5 text-[#60A5FA]" />
+                  <span>City Vistas (तस्वीरें बदलें):</span>
+                </span>
+                <span className="text-[10px] font-mono text-slate-400">
+                  Click to switch live vista
+                </span>
+              </div>
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                {featuredVistas.map((vistaCity) => {
+                  const isCurrent = vistaCity.name === airData.city;
+                  const vistaVis = getCityVisual(vistaCity.name);
+                  return (
+                    <button
+                      key={`hero-vista-${vistaCity.name}`}
+                      type="button"
+                      onClick={() => onCitySelect(vistaCity)}
+                      className={`group/vista relative h-12 w-28 rounded-lg overflow-hidden border shrink-0 transition-all duration-200 text-left ${
+                        isCurrent 
+                          ? 'border-white ring-2 ring-[#3B82F6] scale-102' 
+                          : 'border-white/30 hover:border-white opacity-75 hover:opacity-100 hover:scale-105'
+                      }`}
+                    >
+                      <img 
+                        src={vistaVis.imagePath} 
+                        alt={vistaCity.name} 
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover/vista:scale-115"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-slate-950/60 group-hover/vista:bg-slate-950/40 transition-colors" />
+                      <div className="absolute inset-x-1.5 bottom-1 z-10">
+                        <span className="text-[10px] font-bold text-white block truncate drop-shadow-xs font-sans">
+                          {vistaCity.name}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Photo Credit line & Boundary Layer Diagnostics */}
           <div className="text-[11px] font-mono text-slate-300 border-t border-white/10 pt-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
             <div className="flex items-center gap-1.5">
               <Camera className="w-3.5 h-3.5 text-[#93C5FD] shrink-0" />
@@ -220,7 +330,7 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
         </div>
       </div>
 
-      {/* 2. Pollutants as a Horizontal Strip of 4 Compact Stat Blocks */}
+      {/* 2. Pollutants as a Horizontal Strip of 4 Compact Stat Blocks with Motion */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <div className="text-xs font-mono font-bold uppercase tracking-wider text-[#1E3A8A]">
@@ -230,13 +340,14 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {pollutants.map((p) => {
-            const isExceeded = p.val > p.whoLimit;
-            const barWidth = Math.min(100, (p.val / (p.whoLimit * 2)) * 100);
+          {pollutants.map((p, idx) => {
+            const isExceeded = p.actualVal > p.whoLimit;
+            const barWidth = Math.min(100, (p.actualVal / (p.whoLimit * 2)) * 100);
             return (
               <div 
                 key={p.name}
-                className="bg-white rounded-xl border border-[#DBEAFE] p-4 shadow-xs flex flex-col justify-between"
+                className="bg-white rounded-xl border border-[#DBEAFE] p-4 shadow-xs flex flex-col justify-between data-card-interactive animate-fade-up"
+                style={{ animationDelay: `${idx * 60}ms` }}
               >
                 <div>
                   <div className="flex items-center justify-between text-xs font-mono">
@@ -253,10 +364,10 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
                 </div>
 
                 <div>
-                  {/* Progress bar vs WHO limit */}
+                  {/* Progress bar vs WHO limit with smooth width transition */}
                   <div className="w-full bg-[#E9EEF6] h-2 rounded-sm overflow-hidden mb-1.5">
                     <div 
-                      className="h-full rounded-sm transition-all"
+                      className="h-full rounded-sm transition-all duration-700 ease-out"
                       style={{ 
                         width: `${barWidth}%`, 
                         backgroundColor: isExceeded ? (p.ratio >= 5 ? '#DC2626' : '#EA580C') : '#16A34A' 
@@ -277,8 +388,8 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
         </div>
       </div>
 
-      {/* 3. Optimal Ventilation Window Banner */}
-      <div className={`rounded-xl border p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+      {/* 3. Optimal Ventilation Window Banner with Beacon Highlight */}
+      <div className={`rounded-xl border p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 data-card-interactive ${
         airData.optimalVentilationWindow.currentSafe 
           ? 'bg-[#F0FDF4] border-[#86EFAC] text-[#166534]' 
           : 'bg-[#FFFBEB] border-[#FDE68A] text-[#92400E]'
@@ -305,7 +416,7 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
         </div>
 
         <div className="shrink-0 self-end sm:self-center">
-          <span className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold uppercase border ${
+          <span className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold uppercase border shadow-xs transition-transform duration-200 hover:scale-102 ${
             airData.optimalVentilationWindow.currentSafe 
               ? 'bg-[#16A34A] text-white border-[#16A34A]' 
               : 'bg-[#D97706] text-white border-[#D97706]'
@@ -315,8 +426,8 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
         </div>
       </div>
 
-      {/* 4. Diurnal Smog Curve — REAL SVG Line/Area Chart */}
-      <div className="bg-white rounded-xl border border-[#DBEAFE] p-5 sm:p-6 shadow-xs">
+      {/* 4. Diurnal Smog Curve — REAL SVG Line/Area Chart with Animated Path Drawing */}
+      <div className="bg-white rounded-xl border border-[#DBEAFE] p-5 sm:p-6 shadow-xs data-card-interactive">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-[#DBEAFE] mb-4">
           <div>
             <div className="flex items-center gap-2">
@@ -344,9 +455,10 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
           </div>
         </div>
 
-        {/* Real SVG Line/Area Chart Canvas */}
+        {/* Real SVG Line/Area Chart Canvas with Animated Path Line */}
         <div className="relative w-full overflow-x-auto pb-2">
           <svg 
+            key={`chart-svg-${airData.city}`}
             viewBox={`0 0 ${chartWidth} ${chartHeight}`} 
             className="w-full h-auto min-w-[540px] max-w-full overflow-visible"
           >
@@ -401,31 +513,43 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
                 >
                   OPEN (खिड़की खोलें)
                 </text>
+                {/* Pulsing Beacon around 2 PM point */}
+                <circle
+                  cx={ventPoint.x}
+                  cy={ventPoint.y}
+                  r="12"
+                  fill="#D97706"
+                  fillOpacity="0.25"
+                  className="animate-beacon"
+                />
               </g>
             )}
 
-            {/* SVG Area Fill */}
+            {/* SVG Area Fill with smooth fade */}
             {areaD && (
               <path
                 d={areaD}
                 fill="#3B82F6"
                 fillOpacity="0.18"
+                className="transition-all duration-700"
               />
             )}
 
-            {/* SVG Trend Line */}
+            {/* SVG Trend Line with Animated Drawing Motion */}
             {lineD && (
               <path
+                key={`line-curve-${airData.city}`}
                 d={lineD}
                 fill="none"
                 stroke="#1E40AF"
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                className="animate-svg-line"
               />
             )}
 
-            {/* Points & Value Labels */}
+            {/* Points & Direct Value Labels */}
             {pointsCoords.map((pt) => {
               const isHovered = hoveredPoint === pt.idx;
               const isVent = pt.data.isVentilationWindow;
@@ -436,14 +560,15 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
                   onMouseLeave={() => setHoveredPoint(null)}
                   className="cursor-pointer"
                 >
-                  {/* Point Circle */}
+                  {/* Point Circle with interactive hover scale */}
                   <circle
                     cx={pt.x}
                     cy={pt.y}
-                    r={isHovered ? 6 : (isVent ? 5 : 4)}
+                    r={isHovered ? 6.5 : (isVent ? 5 : 4)}
                     fill={isVent ? '#D97706' : (isHovered ? '#1E40AF' : '#FFFFFF')}
                     stroke={isVent ? '#D97706' : '#1E40AF'}
                     strokeWidth="2.5"
+                    className="transition-all duration-200"
                   />
 
                   {/* Direct PM2.5 Value Label above each point */}
@@ -504,7 +629,7 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
                 {hourlyPoints.map((pt, idx) => (
                   <tr 
                     key={idx}
-                    className={`border-b border-[#DBEAFE] hover:bg-[#F8FAFC] ${
+                    className={`border-b border-[#DBEAFE] transition-colors duration-150 hover:bg-[#F8FAFC] ${
                       pt.isVentilationWindow ? 'bg-[#FFFBEB] font-bold text-[#92400E]' : 'text-[#1E3A8A]'
                     }`}
                   >

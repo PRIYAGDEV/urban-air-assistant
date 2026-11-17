@@ -437,7 +437,7 @@ export interface CityVisual {
 export function getCityVisual(cityName: string): CityVisual {
   const norm = (cityName || '').toLowerCase();
   
-  // Specific Indian City mappings
+  // Specific Indian City mappings with authentic high-resolution local photos
   if (norm.includes('delhi') || norm.includes('noida') || norm.includes('gurugram') || norm.includes('ghaziabad') || norm.includes('faridabad')) {
     return {
       imagePath: '/cities/delhi.jpg',
@@ -487,60 +487,144 @@ export function getCityVisual(cityName: string): CityVisual {
       landmark: 'Shaniwar Wada & Pune Valley'
     };
   }
-  if (norm.includes('ahmedabad') || norm.includes('surat')) {
+  if (norm.includes('ahmedabad')) {
     return {
       imagePath: '/cities/ahmedabad.jpg',
       photoCredit: 'Photo: Sabarmati Riverfront, Ahmedabad by Bhargav Patel / Unsplash',
       landmark: 'Sabarmati Riverfront & Western Hub'
     };
   }
-  if (norm.includes('lucknow') || norm.includes('kanpur') || norm.includes('varanasi') || norm.includes('agra') || norm.includes('gwalior')) {
+  if (norm.includes('surat')) {
     return {
-      imagePath: norm.includes('kanpur') ? '/cities/kanpur.jpg' : '/cities/lucknow.jpg',
-      photoCredit: 'Photo: Indo-Gangetic Basin Corridor on Unsplash',
-      landmark: norm.includes('kanpur') ? 'Ganga Barrage & Industrial Belt' : 'Rumi Darwaza & Gangetic Corridor'
+      imagePath: '/cities/surat.jpg',
+      photoCredit: 'Photo: Surat Industrial & Coastal Hub on Unsplash',
+      landmark: 'Tapi Riverfront & Diamond Corridor'
     };
   }
-  if (norm.includes('jaipur') || norm.includes('jodhpur') || norm.includes('udaipur')) {
+  if (norm.includes('lucknow')) {
+    return {
+      imagePath: '/cities/lucknow.jpg',
+      photoCredit: 'Photo: Rumi Darwaza & Awadh Heritage by Unsplash',
+      landmark: 'Rumi Darwaza & Gomti Basin'
+    };
+  }
+  if (norm.includes('kanpur')) {
+    return {
+      imagePath: '/cities/kanpur.jpg',
+      photoCredit: 'Photo: Ganga Barrage & Industrial Belt on Unsplash',
+      landmark: 'Ganga Barrage & Industrial Belt'
+    };
+  }
+  if (norm.includes('varanasi')) {
+    return {
+      imagePath: '/cities/varanasi.jpg',
+      photoCredit: 'Photo: Ghats of Kashi, Varanasi by Unsplash Contributors',
+      landmark: 'Kashi Ghats & Ganges Inversion Basin'
+    };
+  }
+  if (norm.includes('agra')) {
+    return {
+      imagePath: '/cities/agra.jpg',
+      photoCredit: 'Photo: Taj Mahal, Agra by Unsplash Contributors',
+      landmark: 'Taj Trapezium Zone & Yamuna Corridor'
+    };
+  }
+  if (norm.includes('amritsar')) {
+    return {
+      imagePath: '/cities/amritsar.jpg',
+      photoCredit: 'Photo: Golden Temple, Amritsar by Unsplash Contributors',
+      landmark: 'Harmandir Sahib & Punjab Agricultural Plain'
+    };
+  }
+  if (norm.includes('chandigarh')) {
+    return {
+      imagePath: '/cities/chandigarh.jpg',
+      photoCredit: 'Photo: Chandigarh City & Shivalik by Unsplash',
+      landmark: 'Capitol Complex & Shivalik Foothills'
+    };
+  }
+  if (norm.includes('srinagar')) {
+    return {
+      imagePath: '/cities/srinagar.jpg',
+      photoCredit: 'Photo: Dal Lake & Kashmir Valley by Unsplash',
+      landmark: 'Dal Lake & Himalayan Inversion Basin'
+    };
+  }
+  if (norm.includes('kochi')) {
+    return {
+      imagePath: '/cities/kochi.jpg',
+      photoCredit: 'Photo: Kochi Backwaters & Harbour by Unsplash',
+      landmark: 'Vembanad Backwaters & Marine Basin'
+    };
+  }
+  if (norm.includes('bhopal')) {
+    return {
+      imagePath: '/cities/bhopal.jpg',
+      photoCredit: 'Photo: Upper Lake, Bhopal by Unsplash',
+      landmark: 'Upper Lake & Central Malwa Basin'
+    };
+  }
+  if (norm.includes('indore')) {
+    return {
+      imagePath: '/cities/indore.jpg',
+      photoCredit: 'Photo: Indore Urban Hub by Unsplash',
+      landmark: 'Rajwada Palace & Clean Air Corridor'
+    };
+  }
+  if (norm.includes('dehradun')) {
+    return {
+      imagePath: '/cities/dehradun.jpg',
+      photoCredit: 'Photo: Doon Valley & Mussoorie Foothills by Unsplash',
+      landmark: 'Doon Valley & Shivalik Foothills'
+    };
+  }
+  if (norm.includes('udaipur')) {
+    return {
+      imagePath: '/cities/udaipur.jpg',
+      photoCredit: 'Photo: Lake Pichola, Udaipur by Unsplash',
+      landmark: 'Lake Pichola & Aravalli Basin'
+    };
+  }
+  if (norm.includes('jodhpur')) {
+    return {
+      imagePath: '/cities/jodhpur.jpg',
+      photoCredit: 'Photo: Mehrangarh Fort, Jodhpur by Unsplash',
+      landmark: 'Mehrangarh & Thar Desert Fringe'
+    };
+  }
+  if (norm.includes('visakhapatnam')) {
+    return {
+      imagePath: '/cities/visakhapatnam.jpg',
+      photoCredit: 'Photo: RK Beach & Eastern Ghats by Unsplash',
+      landmark: 'Dolphin’s Nose & Coastal Industrial Belt'
+    };
+  }
+  if (norm.includes('ludhiana')) {
+    return {
+      imagePath: '/cities/ludhiana.jpg',
+      photoCredit: 'Photo: Punjab Industrial Heartland by Unsplash',
+      landmark: 'Sutlej River Basin & Industrial Zone'
+    };
+  }
+  if (norm.includes('coimbatore')) {
+    return {
+      imagePath: '/cities/coimbatore.jpg',
+      photoCredit: 'Photo: Western Ghats Gap, Coimbatore by Unsplash',
+      landmark: 'Palakkad Gap & Textile Corridor'
+    };
+  }
+  if (norm.includes('jaipur')) {
     return {
       imagePath: '/cities/jaipur.jpg',
       photoCredit: 'Photo: Hawa Mahal, Rajasthan by Annie Spratt / Unsplash',
       landmark: 'Hawa Mahal & Aravalli Basin'
     };
   }
-  if (norm.includes('patna') || norm.includes('ranchi') || norm.includes('bhubaneswar')) {
+  if (norm.includes('patna')) {
     return {
       imagePath: '/cities/patna.jpg',
       photoCredit: 'Photo: Ganges Floodplain & Riverfront on Unsplash',
       landmark: 'Ganges Floodplain Corridor'
-    };
-  }
-  if (norm.includes('amritsar') || norm.includes('chandigarh') || norm.includes('ludhiana') || norm.includes('dehradun') || norm.includes('srinagar')) {
-    return {
-      imagePath: '/cities/delhi.jpg',
-      photoCredit: 'Photo: Sub-Himalayan Winter Plain by Unsplash Contributors',
-      landmark: 'Sub-Himalayan & Shivalik Plains'
-    };
-  }
-  if (norm.includes('kochi') || norm.includes('thiruvananthapuram') || norm.includes('coimbatore') || norm.includes('madurai')) {
-    return {
-      imagePath: '/cities/chennai.jpg',
-      photoCredit: 'Photo: Southern Peninsular Corridor on Unsplash',
-      landmark: 'Peninsular Coastal Air Basin'
-    };
-  }
-  if (norm.includes('indore') || norm.includes('bhopal') || norm.includes('nagpur') || norm.includes('jabalpur')) {
-    return {
-      imagePath: '/cities/pune.jpg',
-      photoCredit: 'Photo: Central Indian Plateau by Unsplash Contributors',
-      landmark: 'Central Plateau Air Zone'
-    };
-  }
-  if (norm.includes('guwahati')) {
-    return {
-      imagePath: '/cities/patna.jpg',
-      photoCredit: 'Photo: Brahmaputra Valley on Unsplash',
-      landmark: 'Brahmaputra Valley Gateway'
     };
   }
 
@@ -617,9 +701,65 @@ export function getCityVisual(cityName: string): CityVisual {
   }
   if (norm.includes('los angeles')) {
     return {
-      imagePath: '/cities/new-york.jpg',
-      photoCredit: 'Photo: Urban Metropolitan Corridor on Unsplash',
-      landmark: 'South Coast Air Basin'
+      imagePath: '/cities/los-angeles.jpg',
+      photoCredit: 'Photo: Downtown Los Angeles Skyline on Unsplash',
+      landmark: 'South Coast Basin & Downtown LA'
+    };
+  }
+  if (norm.includes('san francisco')) {
+    return {
+      imagePath: '/cities/san-francisco.jpg',
+      photoCredit: 'Photo: Golden Gate Bridge & Bay on Unsplash',
+      landmark: 'San Francisco Bay & Pacific Air Basin'
+    };
+  }
+  if (norm.includes('seoul')) {
+    return {
+      imagePath: '/cities/seoul.jpg',
+      photoCredit: 'Photo: Seoul Skyline & Han River on Unsplash',
+      landmark: 'Han River Basin & N Seoul Tower'
+    };
+  }
+  if (norm.includes('rome')) {
+    return {
+      imagePath: '/cities/rome.jpg',
+      photoCredit: 'Photo: Colosseum & Historic Rome on Unsplash',
+      landmark: 'Tiber Basin & Historic Centre'
+    };
+  }
+  if (norm.includes('cairo')) {
+    return {
+      imagePath: '/cities/cairo.jpg',
+      photoCredit: 'Photo: Nile Valley & Pyramids on Unsplash',
+      landmark: 'Nile Delta Basin & Giza Corridor'
+    };
+  }
+  if (norm.includes('berlin')) {
+    return {
+      imagePath: '/cities/berlin.jpg',
+      photoCredit: 'Photo: Berlin Skyline & Brandenburg Gate on Unsplash',
+      landmark: 'Spree Valley & Environmental Zone'
+    };
+  }
+  if (norm.includes('toronto')) {
+    return {
+      imagePath: '/cities/toronto.jpg',
+      photoCredit: 'Photo: Toronto Skyline & CN Tower on Unsplash',
+      landmark: 'Lake Ontario Shore & Downtown'
+    };
+  }
+  if (norm.includes('istanbul')) {
+    return {
+      imagePath: '/cities/istanbul.jpg',
+      photoCredit: 'Photo: Bosphorus Strait & Historic Peninsula on Unsplash',
+      landmark: 'Bosphorus Strait & Golden Horn'
+    };
+  }
+  if (norm.includes('mexico city')) {
+    return {
+      imagePath: '/cities/mexico-city.jpg',
+      photoCredit: 'Photo: Mexico City Valley Basin on Unsplash',
+      landmark: 'High-Altitude Volcanic Valley Basin'
     };
   }
 
@@ -658,6 +798,30 @@ export function findNearestCity(lat: number, lon: number): { city: CityPreset; d
   }
 
   return { city: closest, distanceKm: minDistance };
+}
+
+// Curated list of high-visibility cities with verified local photography for visual showcases
+export const FEATURED_VISUAL_CITY_NAMES = [
+  'Delhi NCR',
+  'Mumbai',
+  'Bengaluru',
+  'Varanasi',
+  'Kolkata',
+  'Chennai',
+  'Hyderabad',
+  'Jaipur',
+  'Amritsar',
+  'Srinagar',
+  'New York',
+  'London',
+  'Tokyo',
+  'Paris',
+  'Dubai',
+  'Singapore'
+];
+
+export function getFeaturedCityPresets(): CityPreset[] {
+  return CITY_PRESETS.filter(c => FEATURED_VISUAL_CITY_NAMES.includes(c.name));
 }
 
 export async function fetchLiveAirQuality(city: CityPreset): Promise<AirQualityData> {
