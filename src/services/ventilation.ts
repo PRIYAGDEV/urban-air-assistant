@@ -96,7 +96,10 @@ export function calculateOptimalVentilationWindow(
   const noonStr = `${noonH % 12 === 0 ? 12 : noonH % 12}:${String(noonM).padStart(2, '0')} ${noonH >= 12 ? 'PM' : 'AM'}`;
 
   const now = new Date();
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  // Derive city-local solar minutes from standard meridian
+  const utcMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+  const cityOffsetMinutes = (stdMeridian / 15) * 60;
+  const currentMinutes = Math.floor((utcMinutes + cityOffsetMinutes + 1440) % 1440);
   const aqiVal = currentAqi ?? 160;
   const currentSafe = currentMinutes >= startTotalMinutes && currentMinutes <= endTotalMinutes && aqiVal < 250;
 

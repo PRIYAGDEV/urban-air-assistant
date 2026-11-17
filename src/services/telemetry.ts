@@ -118,8 +118,8 @@ async function fetchWeatherApiAirQuality(city: CityPreset): Promise<AirQualityDa
   const current = json.current;
   const currentAq = current?.air_quality;
 
-  if (!currentAq) {
-    throw new Error('WeatherAPI response did not contain air_quality metrics');
+  if (!currentAq || currentAq.pm2_5 == null) {
+    throw new Error('WeatherAPI response did not contain valid PM2.5 air_quality metrics');
   }
 
   const pm25 = Math.round((currentAq.pm2_5 ?? 0) * 10) / 10;
@@ -182,8 +182,8 @@ async function fetchWeatherApiAirQuality(city: CityPreset): Promise<AirQualityDa
 
 // Tier 2 Fallback: Open-Meteo Air Quality & Weather API
 async function fetchOpenMeteoAirQuality(city: CityPreset): Promise<AirQualityData> {
-  const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${city.lat}&longitude=${city.lon}&current=pm10,pm2_5,nitrogen_dioxide,ozone,us_aqi&hourly=pm2_5,pm10,us_aqi&forecast_days=2`;
-  const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m`;
+  const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${city.lat}&longitude=${city.lon}&current=pm10,pm2_5,nitrogen_dioxide,ozone,us_aqi&hourly=pm2_5,pm10,us_aqi&forecast_days=2&timezone=auto`;
+  const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m&timezone=auto`;
 
   const aqiResult = await fetchWithRetry<OpenMeteoAirQualityResponse>(aqiUrl, 'AirQuality');
 
@@ -202,8 +202,12 @@ async function fetchOpenMeteoAirQuality(city: CityPreset): Promise<AirQualityDat
     logger.warn('[Open-Meteo Weather] Weather telemetry unavailable; displaying live air quality with weather fields marked unavailable.');
   }
 
-  const currentAqi = Math.round(aqiJson.current?.us_aqi ?? 185);
+  if (aqiJson.current?.us_aqi == null && aqiJson.current?.pm2_5 == null) {
+    throw new Error('Open-Meteo response did not contain current AQI or PM2.5 readings');
+  }
+
   const pm25 = Math.round((aqiJson.current?.pm2_5 ?? 92.4) * 10) / 10;
+  const currentAqi = Math.round(aqiJson.current?.us_aqi ?? computeUsAqiFromPm25(pm25));
   const pm10 = Math.round((aqiJson.current?.pm10 ?? 145.2) * 10) / 10;
   const no2 = Math.round((aqiJson.current?.nitrogen_dioxide ?? 48.1) * 10) / 10;
   const ozone = Math.round((aqiJson.current?.ozone ?? 32.0) * 10) / 10;
@@ -296,10 +300,16 @@ function getMockHourly(basePm25: number, baseAqi: number, ventStartHour = 14) {
   const hours = ['8 AM', '10 AM', '12 PM', '2 PM (Window)', '4 PM', '6 PM', '8 PM', '10 PM'];
   const hourNums = [8, 10, 12, 14, 16, 18, 20, 22];
   const factors = [1.3, 1.1, 0.85, 0.65, 0.9, 1.25, 1.4, 1.35];
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const todayStr = `${year}-${month}-${day}`;
+
   return hours.map((hourLabel, i) => {
     const isVent = Math.abs(hourNums[i] - ventStartHour) <= 1;
     return {
-      time: `2026-11-17T${String(hourNums[i]).padStart(2, '0')}:00:00Z`,
+      time: `${todayStr}T${String(hourNums[i]).padStart(2, '0')}:00:00`,
       hourLabel: isVent && !hourLabel.includes('Window') ? `${hourLabel.replace(' (Window)', '')} (Window)` : (isVent ? hourLabel : hourLabel.replace(' (Window)', '')),
       pm25: Math.round(basePm25 * factors[i]),
       aqi: Math.round(baseAqi * factors[i]),
@@ -370,7 +380,10 @@ export function applyLiveTelemetryJitter(currentData: AirQualityData, tick: numb
 
   const now = new Date();
   const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
-  const dateStr = now.toISOString().split('T')[0];
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const dateStr = `${year}-${month}-${day}`;
 
   // Update latest hourly observation with live jitter
   const updatedHourly = currentData.hourly.map((h, i) => {

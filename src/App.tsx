@@ -238,6 +238,14 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#1E3A8A] flex flex-col font-sans selection:bg-[#3B82F6] selection:text-white">
+      {/* Accessible Skip-to-Content Link for Keyboard & Screen Reader Users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-[#1E40AF] focus:text-white focus:rounded-lg focus:shadow-md focus:font-mono focus:text-xs focus:font-bold focus:outline-none"
+      >
+        Skip to main content
+      </a>
+
       {/* Top Header Deck */}
       <Header
         airData={airData}
@@ -256,7 +264,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Container - Sections separated by 48px */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 sm:py-8 space-y-10 sm:space-y-12">
+      <main id="main-content" tabIndex={-1} className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 sm:py-8 space-y-10 sm:space-y-12 focus:outline-none">
         {/* Live 1-Second Auto-Refresh & Motion Photos Control Deck */}
         <div className="bg-white rounded-xl border border-[#DBEAFE] p-3 sm:p-4 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-3 animate-fade-up">
           <div className="flex items-center gap-2.5 flex-wrap">
