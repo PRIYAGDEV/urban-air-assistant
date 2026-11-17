@@ -370,7 +370,7 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
                   Click to switch live vista
                 </span>
               </div>
-              <div className="flex items-center gap-2.5 overflow-x-auto pb-1.5 scrollbar-none">
+              <div className="flex items-center gap-2.5 overflow-x-auto pb-2 scrollbar-none pr-4 sm:pr-6">
                 {featuredVistas.map((vistaCity) => {
                   const isCurrent = vistaCity.name === airData.city;
                   const vistaVis = getCityVisual(vistaCity.name);
@@ -416,6 +416,7 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
                     </button>
                   );
                 })}
+                <div className="w-2 shrink-0" aria-hidden="true" />
               </div>
             </div>
           )}

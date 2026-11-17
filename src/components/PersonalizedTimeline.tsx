@@ -50,35 +50,36 @@ export const PersonalizedTimeline: React.FC<PersonalizedTimelineProps> = ({ airD
         </div>
       </div>
 
-      {/* Vertical Timeline - Left Rail with Time, Right Side with Details */}
-      <div className="relative pl-4 sm:pl-6 space-y-8 before:absolute before:left-[19px] sm:before:left-[27px] before:top-4 before:bottom-4 before:w-0.5 before:bg-[#DBEAFE]">
+      {/* Vertical Timeline - Balanced and Clean Layout */}
+      <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-[11px] sm:before:left-[15px] before:top-3 before:bottom-3 before:w-0.5 before:bg-[#DBEAFE]">
         {cards.map((card, idx) => (
           <div 
             key={card.id || idx} 
-            className="relative flex flex-col md:flex-row items-start gap-4 sm:gap-6 animate-fade-up"
+            className="relative animate-fade-up"
             style={{ animationDelay: `${idx * 75}ms` }}
           >
-            {/* Timeline node marker & Time rail */}
-            <div className="flex items-center gap-3 shrink-0">
-              <div className={`w-3.5 h-3.5 rounded-full border-2 bg-white z-10 transition-transform duration-200 hover:scale-125 ${
-                card.urgency === 'high' ? 'border-[#DC2626] ring-4 ring-[#FEE2E2]' : 'border-[#1E40AF] ring-4 ring-[#EFF6FF]'
-              }`} />
-              <div className="font-mono text-xs font-bold text-[#1E40AF] bg-[#F8FAFC] px-2.5 py-1 rounded-lg border border-[#DBEAFE] whitespace-nowrap min-w-[110px] text-center shadow-xs">
-                {card.timeSlot}
-              </div>
-            </div>
+            {/* Timeline node marker centered on vertical line */}
+            <div className={`absolute -left-[19px] sm:-left-[23px] top-4.5 w-3.5 h-3.5 rounded-full border-2 bg-white z-10 transition-transform duration-200 hover:scale-125 ${
+              card.urgency === 'high' ? 'border-[#DC2626] ring-4 ring-[#FEE2E2]' : 'border-[#1E40AF] ring-4 ring-[#EFF6FF]'
+            }`} />
 
-            {/* Right Side: Title + Description + Why it works */}
-            <div className={`flex-1 bg-[#F8FAFC] rounded-xl border p-4 sm:p-5 transition-all duration-200 w-full hover:-translate-y-0.5 hover:shadow-xs ${
+            {/* Action Card with integrated Time Slot header */}
+            <div className={`bg-[#F8FAFC] rounded-xl border p-4 sm:p-5 transition-all duration-200 w-full hover:-translate-y-0.5 hover:shadow-xs ${
               card.urgency === 'high'
                 ? 'border-[#FCA5A5] bg-[#FEF2F2]/50 hover:border-[#F87171]'
                 : 'border-[#DBEAFE] hover:border-[#93C5FD]'
             }`}>
-              {/* Header row */}
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                <h3 className="font-serif font-bold text-base sm:text-lg text-[#1E3A8A]">
-                  {card.title}
-                </h3>
+              {/* Header row: Time slot, Title & Badges */}
+              <div className="flex flex-wrap items-center justify-between gap-2.5 mb-2.5">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <span className="font-mono text-xs font-bold text-[#1E40AF] bg-white px-2.5 py-1 rounded-lg border border-[#DBEAFE] shadow-2xs flex items-center gap-1.5 shrink-0">
+                    <Clock className="w-3.5 h-3.5 text-[#3B82F6]" />
+                    <span>{card.timeSlot}</span>
+                  </span>
+                  <h3 className="font-serif font-bold text-base sm:text-lg text-[#1E3A8A]">
+                    {card.title}
+                  </h3>
+                </div>
 
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-white text-[#475569] border border-[#DBEAFE] font-semibold">

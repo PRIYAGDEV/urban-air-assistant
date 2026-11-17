@@ -9,7 +9,6 @@ import {
   Check, 
   Globe, 
   Camera, 
-  LayoutGrid, 
   ListFilter,
   RefreshCw,
   RotateCw,
@@ -359,61 +358,64 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
 
         {/* 1. Visual City Photo Cards Mode (Living Motion Photos of Cities) */}
         {viewMode === 'photos' && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 animate-fade-up">
-            {displayCities.map((city) => {
-              const isSelected = city.name === selectedCity.name;
-              const visual = getCityVisual(city.name);
-              return (
-                <button
-                  key={`photo-card-${city.name}-${city.country}`}
-                  type="button"
-                  onClick={() => handleSelectCity(city)}
-                  className={`group relative h-28 sm:h-32 rounded-xl overflow-hidden border text-left transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md ${
-                    isSelected
-                      ? 'border-[#1E40AF] ring-2 ring-[#3B82F6] shadow-sm'
-                      : 'border-[#DBEAFE] hover:border-[#93C5FD]'
-                  }`}
-                >
-                  {/* Living Motion Photo with Multi-Axis Pan & Zoom Drift */}
-                  <img
-                    src={visual.imagePath}
-                    alt={city.name}
-                    className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-115 ${
-                      isSelected ? 'animate-motion-photo' : 'group-hover:animate-motion-photo'
+          <div className="overflow-x-auto pb-2 -mx-1 px-1 scrollbar-none">
+            <div className="flex sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 animate-fade-up pr-4 sm:pr-0">
+              {displayCities.map((city) => {
+                const isSelected = city.name === selectedCity.name;
+                const visual = getCityVisual(city.name);
+                return (
+                  <button
+                    key={`photo-card-${city.name}-${city.country}`}
+                    type="button"
+                    onClick={() => handleSelectCity(city)}
+                    className={`group relative h-28 sm:h-32 rounded-xl overflow-hidden border text-left transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md shrink-0 w-36 sm:w-auto ${
+                      isSelected
+                        ? 'border-[#1E40AF] ring-2 ring-[#3B82F6] shadow-sm'
+                        : 'border-[#DBEAFE] hover:border-[#93C5FD]'
                     }`}
-                    loading="lazy"
-                  />
-                  {/* Atmospheric Smog Drift Sweep */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-haze pointer-events-none" />
-                  
-                  {/* Dark Contrast Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/40 to-transparent" />
+                  >
+                    {/* Living Motion Photo with Multi-Axis Pan & Zoom Drift */}
+                    <img
+                      src={visual.imagePath}
+                      alt={city.name}
+                      className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-115 ${
+                        isSelected ? 'animate-motion-photo' : 'group-hover:animate-motion-photo'
+                      }`}
+                      loading="lazy"
+                    />
+                    {/* Atmospheric Smog Drift Sweep */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-haze pointer-events-none" />
+                    
+                    {/* Dark Contrast Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/40 to-transparent" />
 
-                  {/* Motion Tag Badge */}
-                  <span className="absolute top-1.5 left-1.5 text-[8px] font-mono px-1.5 py-0.5 rounded bg-black/60 text-white/90 border border-white/20 flex items-center gap-1 z-10">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-                    MOTION
-                  </span>
+                    {/* Motion Tag Badge */}
+                    <span className="absolute top-1.5 left-1.5 text-[8px] font-mono px-1.5 py-0.5 rounded bg-black/60 text-white/90 border border-white/20 flex items-center gap-1 z-10">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                      MOTION
+                    </span>
 
-                  {/* Active Indicator Badge */}
-                  {isSelected && (
-                    <div className="absolute top-1.5 right-1.5 bg-[#1E40AF] text-white rounded-md p-1 shadow-xs z-10">
-                      <Check className="w-3 h-3" />
-                    </div>
-                  )}
+                    {/* Active Indicator Badge */}
+                    {isSelected && (
+                      <div className="absolute top-1.5 right-1.5 bg-[#1E40AF] text-white rounded-md p-1 shadow-xs z-10">
+                        <Check className="w-3 h-3" />
+                      </div>
+                    )}
 
-                  {/* City Name & Landmark Info */}
-                  <div className="absolute inset-x-0 bottom-0 p-2 z-10">
-                    <div className="text-white font-bold text-xs font-sans drop-shadow-xs flex items-center justify-between">
-                      <span className="truncate">{city.name}</span>
+                    {/* City Name & Landmark Info */}
+                    <div className="absolute inset-x-0 bottom-0 p-2 z-10">
+                      <div className="text-white font-bold text-xs font-sans drop-shadow-xs flex items-center justify-between">
+                        <span className="truncate">{city.name}</span>
+                      </div>
+                      <div className="text-[10px] text-slate-300 font-mono leading-tight line-clamp-2 mt-0.5">
+                        {visual.landmark.split('&')[0].trim()}
+                      </div>
                     </div>
-                    <div className="text-[10px] text-slate-300 font-mono leading-tight line-clamp-2 mt-0.5">
-                      {visual.landmark.split('&')[0].trim()}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })}
+              <div className="w-1 shrink-0 sm:hidden" aria-hidden="true" />
+            </div>
           </div>
         )}
 

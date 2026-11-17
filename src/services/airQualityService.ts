@@ -738,8 +738,8 @@ export function getCityVisual(cityName: string): CityVisual {
   }
   if (norm.includes('nagpur')) {
     return {
-      imagePath: '/cities/delhi.jpg',
-      photoCredit: 'Photo: Nagpur Air Monitoring Station (Wikimedia Commons CC)',
+      imagePath: '/cities/nagpur.jpg',
+      photoCredit: 'Photo: Deekshabhoomi Stupa, Nagpur (Wikimedia Commons CC)',
       landmark: 'Deekshabhoomi'
     };
   }
