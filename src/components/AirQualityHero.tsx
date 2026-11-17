@@ -1,20 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Wind, 
-  Layers, 
   Clock, 
-  ShieldAlert, 
-  AlertTriangle,
-  Info,
   Camera,
   MapPin,
-  ChevronRight,
-  Radio,
   RefreshCw
 } from 'lucide-react';
 import { AirQualityData, UserProfile, CityPreset } from '../types';
 import { calculateOERI } from '../services/decisionEngine';
 import { getCityVisual, CITY_PRESETS } from '../services/airQualityService';
+import { getHindiPeriodLabel } from '../utils/diurnal';
+
+// oxlint-disable-next-line react/only-export-components
+export { getHindiPeriodLabel };
 
 interface AirQualityHeroProps {
   airData: AirQualityData;
@@ -25,55 +22,26 @@ interface AirQualityHeroProps {
   loading?: boolean;
 }
 
-// Hindi diurnal period label mapper:
-// 4 AM-11 AM: सुबह (Morning), 12 PM-4 PM: दोपहर (Afternoon), 5 PM-6 PM: शाम (Evening), 7 PM-3 AM: रात (Night)
-export function getHindiPeriodLabel(timeStrOrLabel: string): string {
-  let hour = -1;
-  const match = timeStrOrLabel.match(/(\d+)\s*(AM|PM)/i);
-  if (match) {
-    let h = parseInt(match[1], 10);
-    const meridiem = match[2].toUpperCase();
-    if (meridiem === 'PM' && h !== 12) h += 12;
-    if (meridiem === 'AM' && h === 12) h = 0;
-    hour = h;
-  } else if (timeStrOrLabel.includes('T') || timeStrOrLabel.includes('-')) {
-    const d = new Date(timeStrOrLabel);
-    if (!isNaN(d.getTime())) {
-      hour = d.getHours();
-    }
-  }
-
-  if (hour >= 4 && hour < 12) {
-    return 'सुबह (Morning)';
-  }
-  if (hour >= 12 && hour < 17) {
-    return 'दोपहर (Afternoon)';
-  }
-  if (hour >= 17 && hour < 19) {
-    // 5 PM and 6 PM
-    return 'शाम (Evening)';
-  }
-  // 7 PM, 8 PM, 9 PM, 10 PM, 11 PM, 12 AM - 3 AM
-  return 'रात (Night)';
-}
-
 // Smooth numerical count-up hook for cinematic telemetry transitions
 function useCountUp(target: number, duration: number = 650): number {
   const [current, setCurrent] = useState(target);
+  const currentRef = useRef(target);
 
   useEffect(() => {
-    let startTimestamp: number | null = null;
-    const initial = current;
+    const initial = currentRef.current;
     const diff = target - initial;
     if (diff === 0) return;
 
+    let startTimestamp: number | null = null;
     let animationFrameId: number;
     const step = (timestamp: number) => {
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
       // ease-out quartic
       const ease = 1 - Math.pow(1 - progress, 4);
-      setCurrent(Math.round(initial + diff * ease));
+      const nextVal = Math.round(initial + diff * ease);
+      currentRef.current = nextVal;
+      setCurrent(nextVal);
       if (progress < 1) {
         animationFrameId = requestAnimationFrame(step);
       }

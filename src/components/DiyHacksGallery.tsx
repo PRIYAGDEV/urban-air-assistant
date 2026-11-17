@@ -4,9 +4,7 @@ import {
   Fan, 
   Droplets, 
   Flame, 
-  ShieldCheck, 
-  CheckCircle,
-  Sliders
+  CheckCircle
 } from 'lucide-react';
 import { UserProfile } from '../types';
 
@@ -14,7 +12,7 @@ interface DiyHacksGalleryProps {
   profile: UserProfile;
 }
 
-export const DiyHacksGallery: React.FC<DiyHacksGalleryProps> = ({ profile }) => {
+export const DiyHacksGallery: React.FC<DiyHacksGalleryProps> = ({ profile: _profile }) => {
   const [roomSize, setRoomSize] = useState<number>(180); // sq ft
   const [selectedFilter, setSelectedFilter] = useState<'merv13' | 'hepa'>('merv13');
 

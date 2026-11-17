@@ -172,7 +172,7 @@ export const UserProfileDrawer: React.FC<UserProfileDrawerProps> = ({ profile, o
             <div className="relative flex-1">
               <select
                 value={profile.cookingFuel}
-                onChange={(e) => onChange({ ...profile, cookingFuel: e.target.value as any })}
+                onChange={(e) => onChange({ ...profile, cookingFuel: e.target.value as UserProfile['cookingFuel'] })}
                 className="w-full bg-[#F8FAFC] border border-[#DBEAFE] rounded-lg px-3 py-2.5 text-xs text-[#1E3A8A] font-semibold focus:ring-2 focus:ring-[#3B82F6] focus:outline-none cursor-pointer appearance-none pr-8 min-h-[44px]"
               >
                 <option value="lpg_piped">LPG / Piped Gas</option>

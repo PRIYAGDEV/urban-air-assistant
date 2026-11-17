@@ -4,8 +4,7 @@ import {
   Cigarette, 
   Leaf, 
   CheckSquare, 
-  Square, 
-  ShieldCheck
+  Square
 } from 'lucide-react';
 import { AirQualityData, UserProfile } from '../types';
 import { calculateCounterfactualImpact } from '../services/decisionEngine';
@@ -17,7 +16,7 @@ interface ImpactCounterfactualSimulatorProps {
 
 export const ImpactCounterfactualSimulator: React.FC<ImpactCounterfactualSimulatorProps> = ({
   airData,
-  profile,
+  profile: _profile,
 }) => {
   const [n95Active, setN95Active] = useState<boolean>(true);
   const [sanctuaryActive, setSanctuaryActive] = useState<boolean>(true);

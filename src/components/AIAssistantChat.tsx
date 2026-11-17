@@ -5,8 +5,7 @@ import {
   User, 
   RefreshCw,
   Volume2, 
-  VolumeX,
-  MessageSquare
+  VolumeX
 } from 'lucide-react';
 import { AirQualityData, UserProfile, ChatMessage } from '../types';
 import { askGemini } from '../services/geminiService';
@@ -18,7 +17,7 @@ interface AIAssistantChatProps {
 }
 
 export const AIAssistantChat: React.FC<AIAssistantChatProps> = ({ airData, profile, apiKey }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [
     {
       id: 'welcome',
       role: 'assistant',

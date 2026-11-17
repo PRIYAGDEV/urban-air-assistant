@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wind, MapPin, AlertTriangle, ChevronDown, Radio, RotateCw, Play, Pause } from 'lucide-react';
+import { Wind, MapPin, AlertTriangle, ChevronDown, RotateCw } from 'lucide-react';
 import { AirQualityData, CityPreset } from '../types';
 import { CITY_PRESETS } from '../services/airQualityService';
 

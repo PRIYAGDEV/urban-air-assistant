@@ -23,12 +23,8 @@ import {
   Activity, 
   Wrench, 
   Bot, 
-  ShieldCheck, 
-  AlertCircle,
   RefreshCw,
   Camera,
-  Radio,
-  Sparkles,
   RotateCw,
   Play,
   Pause
@@ -48,6 +44,7 @@ export const App: React.FC = () => {
   });
 
   const [hasLoadedOnce, setHasLoadedOnce] = useState<boolean>(false);
+  const hasLoadedOnceRef = useRef<boolean>(false);
   const [airData, setAirData] = useState<AirQualityData>(() => {
     const fb = getFallbackData(selectedCity, 'Initial connection pending / live sensor offline');
     return {
@@ -130,7 +127,7 @@ export const App: React.FC = () => {
       baseAirDataRef.current = cached;
       setAirData(cached);
       setLoading(false);
-    } else if (hasLoadedOnce) {
+    } else if (hasLoadedOnceRef.current) {
       const initial = getFallbackData(selectedCity);
       baseAirDataRef.current = initial;
       setAirData(initial);
@@ -145,6 +142,7 @@ export const App: React.FC = () => {
           cityCacheRef.current[selectedCity.name] = data;
           baseAirDataRef.current = data;
           setAirData(data);
+          hasLoadedOnceRef.current = true;
           setHasLoadedOnce(true);
         }
       })
@@ -154,6 +152,7 @@ export const App: React.FC = () => {
           const fallback = getFallbackData(selectedCity, 'Live data unavailable for this city right now');
           baseAirDataRef.current = fallback;
           setAirData(fallback);
+          hasLoadedOnceRef.current = true;
           setHasLoadedOnce(true);
         }
       })
@@ -226,7 +225,7 @@ export const App: React.FC = () => {
         setAirData(data);
         setLoading(false);
       })
-      .catch((err) => {
+      .catch((_err) => {
         const fallback = getFallbackData(selectedCity, 'Live data unavailable for this city right now');
         baseAirDataRef.current = fallback;
         setAirData(fallback);
