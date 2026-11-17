@@ -19,7 +19,6 @@ import {
   Wrench, 
   Bot, 
   ShieldCheck, 
-  HeartHandshake,
   AlertCircle
 } from 'lucide-react';
 
@@ -75,8 +74,8 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      {/* Header */}
+    <div className="min-h-screen bg-[#06090e] text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
+      {/* Header Deck */}
       <Header
         airData={airData}
         selectedCity={selectedCity}
@@ -85,66 +84,70 @@ export const App: React.FC = () => {
         hasApiKey={Boolean(apiKey)}
       />
 
-      {/* Main Container */}
+      {/* Main Observatory Stage */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-6">
-        {/* Environmental Telemetry Hero */}
+        {/* Environmental Telemetry Horizon */}
         <AirQualityHero airData={airData} profile={profile} />
 
-        {/* User Profile & Lifestyle Constraints */}
+        {/* User Profile & Lifestyle Constraints Matrix */}
         <UserProfileDrawer profile={profile} onChange={setProfile} />
 
-        {/* Navigation Tabs */}
-        <div className="flex items-center gap-1.5 p-1.5 bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto scrollbar-none">
+        {/* Cockpit Segmented Navigation Controls */}
+        <div className="cinematic-panel rounded-xl p-1.5 border border-white/[0.08] flex items-center gap-1.5 overflow-x-auto scrollbar-none">
           <button
+            type="button"
             onClick={() => setActiveTab('timeline')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all shrink-0 ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all shrink-0 ${
               activeTab === 'timeline'
-                ? 'bg-emerald-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850'
+                ? 'bg-obs-800 text-white border border-white/[0.1] font-semibold shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-obs-900/60'
             }`}
           >
-            <CalendarClock className="w-4 h-4" />
-            <span>24-Hour Smog Action Plan</span>
+            <CalendarClock className="w-4 h-4 text-emerald-400" />
+            <span>24-Hour Smog Action Protocol</span>
           </button>
 
           <button
+            type="button"
             onClick={() => setActiveTab('simulator')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all shrink-0 ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all shrink-0 ${
               activeTab === 'simulator'
-                ? 'bg-emerald-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850'
+                ? 'bg-obs-800 text-white border border-white/[0.1] font-semibold shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-obs-900/60'
             }`}
           >
-            <Activity className="w-4 h-4" />
-            <span>Science & Impact Simulator</span>
+            <Activity className="w-4 h-4 text-teal-400" />
+            <span>Health &amp; Counterfactual Impact</span>
           </button>
 
           <button
+            type="button"
             onClick={() => setActiveTab('diy')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all shrink-0 ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all shrink-0 ${
               activeTab === 'diy'
-                ? 'bg-emerald-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850'
+                ? 'bg-obs-800 text-white border border-white/[0.1] font-semibold shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-obs-900/60'
             }`}
           >
-            <Wrench className="w-4 h-4" />
-            <span>DIY Hacks & Alternatives</span>
+            <Wrench className="w-4 h-4 text-amber-400" />
+            <span>DIY Clean Air Lab</span>
           </button>
 
           <button
+            type="button"
             onClick={() => setActiveTab('chat')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all shrink-0 ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-mono uppercase tracking-wider transition-all shrink-0 ${
               activeTab === 'chat'
-                ? 'bg-emerald-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850'
+                ? 'bg-obs-800 text-white border border-white/[0.1] font-semibold shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-obs-900/60'
             }`}
           >
-            <Bot className="w-4 h-4" />
-            <span>Ask AuraGuard AI</span>
+            <Bot className="w-4 h-4 text-sky-400" />
+            <span>AuraGuard Oracle</span>
           </button>
         </div>
 
-        {/* Tab Content Panes */}
+        {/* Tab Module Display Deck */}
         <div className="transition-all">
           {activeTab === 'timeline' && (
             <PersonalizedTimeline airData={airData} profile={profile} />
@@ -163,29 +166,29 @@ export const App: React.FC = () => {
           )}
         </div>
 
-        {/* Bottom Safety & Environmental Medical Disclaimer */}
-        <div className="bg-slate-900/40 border border-slate-850 rounded-xl p-4 flex items-start gap-3 text-xs text-slate-400">
+        {/* Public Health Scientific Disclaimer */}
+        <div className="cinematic-panel rounded-xl p-4 flex items-start gap-3 text-xs text-slate-400 border border-white/[0.06]">
           <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-          <p className="leading-relaxed">
-            <strong className="text-slate-300">Public Health & Environmental Exposure Disclaimer:</strong> AuraGuard AI provides environmental exposure mitigation strategies based on real-time atmospheric modeling, WHO/EPA guidelines, and peer-reviewed physical interventions. It does not provide medical diagnoses or replace physician consultations. If you or a family member experience acute breathing difficulty, persistent chest tightness, or respiratory distress, seek immediate medical attention.
+          <p className="leading-relaxed font-sans">
+            <strong className="text-slate-200 font-medium">Environmental Exposure &amp; Health Disclaimer:</strong> AuraGuard AI synthesizes real-time atmospheric boundary telemetry, peer-reviewed aerosol physics, and WHO/EPA indoor guidelines. It is an exposure reduction tool and does not constitute medical diagnosis or clinical prescription. If experiencing acute bronchospasm, cyanosis, or respiratory distress, contact local emergency services immediately.
           </p>
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-850 bg-slate-950 py-6 px-4 text-center text-xs text-slate-500">
+      {/* Footer Deck */}
+      <footer className="border-t border-white/[0.08] bg-[#06090e] py-6 px-4 text-xs font-mono text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-slate-400">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>Built for PromptWars Virtual 2026 • Challenge 6: Urban Air Quality Assistant</span>
+            <span>AuraGuard AI • PromptWars Challenge 6: Urban Air Quality Assistant</span>
           </div>
-          <div className="text-slate-400">
-            Designed with Google Gemini GenAI & Real-Time OpenAQ/Open-Meteo Telemetry
+          <div className="text-slate-500 text-[11px]">
+            Engineered with Google Gemini GenAI &amp; Open-Meteo Global Atmospheric APIs
           </div>
         </div>
       </footer>
 
-      {/* API Key Modal */}
+      {/* Credentials Modal */}
       <ApiKeyModal
         isOpen={isApiKeyModalOpen}
         onClose={() => setIsApiKeyModalOpen(false)}

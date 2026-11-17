@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wind, MapPin, Key, Sparkles, AlertTriangle, Code } from 'lucide-react';
+import { Wind, MapPin, Key, AlertTriangle, ChevronDown, CheckCircle2, Code } from 'lucide-react';
 import { AirQualityData, CityPreset } from '../types';
 import { CITY_PRESETS } from '../services/airQualityService';
 
@@ -19,92 +19,97 @@ export const Header: React.FC<HeaderProps> = ({
   hasApiKey,
 }) => {
   return (
-    <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 lg:px-8 py-3.5 transition-all">
+    <header className="sticky top-0 z-40 bg-[#06090e]/90 backdrop-blur-md border-b border-white/[0.08] px-4 lg:px-8 py-3 transition-colors">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-        {/* Brand */}
+        {/* Brand & System Identity */}
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 ring-1 ring-emerald-400/30">
-              <Wind className="w-5 h-5 text-white animate-pulse" />
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-obs-850 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-sm">
+              <Wind className="w-4 h-4" />
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-200 to-white">
-                  AuraGuard AI
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-sm tracking-tight text-white font-sans">
+                  AuraGuard <span className="text-emerald-400 font-mono font-medium">AI</span>
                 </span>
-                <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  GenAI 2.0
+                <span className="text-[10px] font-mono tracking-wider px-1.5 py-0.5 rounded bg-white/[0.05] text-slate-300 border border-white/[0.08] uppercase">
+                  Station v2.4
                 </span>
               </div>
-              <p className="text-xs text-slate-400 hidden sm:block">
-                Urban Air Quality & Winter Smog Assistant
+              <p className="text-[11px] text-slate-400 font-mono hidden sm:block">
+                Atmospheric Intelligence &amp; Smog Mitigation Deck
               </p>
             </div>
           </div>
 
-          {/* Mobile status indicator */}
-          <div className="sm:hidden flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border border-slate-700 bg-slate-800">
+          {/* Mobile Status Tag */}
+          <div className="sm:hidden flex items-center gap-1.5 text-xs font-mono px-2 py-0.5 rounded border border-white/[0.1] bg-obs-850">
             <span
-              className="w-2.5 h-2.5 rounded-full animate-ping"
+              className="w-2 h-2 rounded-full"
               style={{ backgroundColor: airData.color }}
             />
-            <span>AQI {airData.aqi}</span>
+            <span className="text-slate-200">AQI {airData.aqi}</span>
           </div>
         </div>
 
-        {/* Center / Right controls */}
-        <div className="flex items-center flex-wrap sm:flex-nowrap gap-2.5 w-full sm:w-auto justify-end">
-          {/* City Selector */}
-          <div className="relative flex items-center bg-slate-800/90 rounded-lg border border-slate-700/80 px-2.5 py-1.5 text-xs shadow-inner">
-            <MapPin className="w-3.5 h-3.5 text-emerald-400 mr-1.5 shrink-0" />
+        {/* Console Controls */}
+        <div className="flex items-center flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto justify-end">
+          {/* Station / City Selector */}
+          <div className="relative flex items-center bg-obs-850 hover:bg-obs-800 rounded-lg border border-white/[0.08] px-2.5 py-1.5 text-xs transition-colors">
+            <MapPin className="w-3.5 h-3.5 text-slate-400 mr-1.5 shrink-0" />
             <select
               value={selectedCity.name}
               onChange={(e) => {
                 const found = CITY_PRESETS.find((c) => c.name === e.target.value);
                 if (found) onCityChange(found);
               }}
-              className="bg-transparent text-slate-200 font-medium focus:outline-none cursor-pointer pr-1"
+              className="bg-transparent text-slate-200 font-medium focus:outline-none cursor-pointer appearance-none pr-5 text-xs font-sans"
             >
               {CITY_PRESETS.map((c) => (
-                <option key={c.name} value={c.name} className="bg-slate-900 text-slate-200">
+                <option key={c.name} value={c.name} className="bg-obs-900 text-slate-200">
                   {c.name}, {c.country}
                 </option>
               ))}
             </select>
+            <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 pointer-events-none" />
           </div>
 
-          {/* Thermal Inversion Alert Pill */}
+          {/* Thermal Inversion Alert Capsule */}
           {airData.thermalInversionActive && (
-            <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-              <span>Winter Inversion Active</span>
+            <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs font-mono">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span>INVERSION ACTIVE (BLH &lt; 300m)</span>
             </div>
           )}
 
-          {/* Gemini API Key Button */}
+          {/* Gemini API Key Status */}
           <button
             onClick={onOpenApiKeyModal}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-mono border transition-all ${
               hasApiKey
-                ? 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30 hover:bg-emerald-900/50'
-                : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-750 hover:text-white'
+                ? 'bg-emerald-950/30 text-emerald-300 border-emerald-500/30 hover:bg-emerald-950/50'
+                : 'bg-obs-850 text-slate-300 border-white/[0.08] hover:bg-obs-800 hover:text-white'
             }`}
             title="Configure Gemini API Key"
           >
-            {hasApiKey ? <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> : <Key className="w-3.5 h-3.5 text-slate-400" />}
+            {hasApiKey ? (
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            ) : (
+              <Key className="w-3.5 h-3.5 text-slate-400" />
+            )}
             <span>{hasApiKey ? 'Gemini Live' : 'API Key'}</span>
           </button>
 
-          {/* GitHub Repo Link */}
+          {/* GitHub Source Link */}
           <a
             href="https://github.com/PRIYAGDEV/urban-air-assistant"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-white transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-mono bg-obs-850 text-slate-300 border border-white/[0.08] hover:bg-obs-800 hover:text-white transition-colors"
             title="View Public GitHub Repository"
           >
             <Code className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">GitHub</span>
+            <span className="hidden sm:inline">Repo</span>
           </a>
         </div>
       </div>
