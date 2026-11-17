@@ -31,6 +31,9 @@ export interface AirQualityData {
     aqi: number;
     isVentilationWindow?: boolean;
   }[];
+  isLive?: boolean;
+  isDemoData?: boolean;
+  errorMessage?: string;
 }
 
 export type HouseholdType = 

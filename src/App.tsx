@@ -6,6 +6,7 @@ import {
 } from './types';
 import { CITY_PRESETS, fetchLiveAirQuality, getFallbackData } from './services/airQualityService';
 import { Header } from './components/Header';
+import { CitySelector } from './components/CitySelector';
 import { AirQualityHero } from './components/AirQualityHero';
 import { UserProfileDrawer } from './components/UserProfileDrawer';
 import { PersonalizedTimeline } from './components/PersonalizedTimeline';
@@ -23,8 +24,19 @@ import {
 } from 'lucide-react';
 
 export const App: React.FC = () => {
-  const [selectedCity, setSelectedCity] = useState<CityPreset>(CITY_PRESETS[0]);
-  const [airData, setAirData] = useState<AirQualityData>(getFallbackData(CITY_PRESETS[0]));
+  // Initialize default city from localStorage or fallback to Delhi NCR
+  const [selectedCity, setSelectedCity] = useState<CityPreset>(() => {
+    if (typeof window !== 'undefined') {
+      const savedName = localStorage.getItem('auraguard_selected_city');
+      if (savedName) {
+        const found = CITY_PRESETS.find((c) => c.name === savedName);
+        if (found) return found;
+      }
+    }
+    return CITY_PRESETS[0]; // Default: Delhi NCR
+  });
+
+  const [airData, setAirData] = useState<AirQualityData>(() => getFallbackData(selectedCity));
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<'timeline' | 'simulator' | 'diy' | 'chat'>('timeline');
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState<boolean>(false);
@@ -43,10 +55,15 @@ export const App: React.FC = () => {
     hasPurifier: false
   });
 
-  // Load air quality data on city change
+  // Load fresh air quality data whenever selected city changes
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
+
+    // Persist selected city in localStorage so it stays selected on reload
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('auraguard_selected_city', selectedCity.name);
+    }
 
     fetchLiveAirQuality(selectedCity)
       .then((data) => {
@@ -56,8 +73,11 @@ export const App: React.FC = () => {
         }
       })
       .catch((err) => {
-        console.error('Failed to load air data:', err);
-        if (isMounted) setLoading(false);
+        console.error('Failed to load live air data for', selectedCity.name, err);
+        if (isMounted) {
+          setAirData(getFallbackData(selectedCity, 'Live data unavailable for this city right now'));
+          setLoading(false);
+        }
       });
 
     return () => {
@@ -86,6 +106,15 @@ export const App: React.FC = () => {
 
       {/* Main Observatory Stage */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-6">
+        {/* Multi-City Station Selector (Directly Above AQI Hero) */}
+        <CitySelector
+          selectedCity={selectedCity}
+          onCitySelect={setSelectedCity}
+          loading={loading}
+          isDemoData={airData.isDemoData}
+          errorMessage={airData.errorMessage}
+        />
+
         {/* Environmental Telemetry Horizon */}
         <AirQualityHero airData={airData} profile={profile} />
 

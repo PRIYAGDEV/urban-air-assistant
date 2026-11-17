@@ -24,11 +24,18 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
       {/* Top Telemetry Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-white/[0.07]">
         <div>
-          <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1.5">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400" />
-            <span>Station Telemetry</span>
+          <div className="flex items-center flex-wrap gap-2 text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1.5">
+            <span className={`inline-block w-2 h-2 rounded-full ${airData.isDemoData ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+            <span className={airData.isDemoData ? 'text-amber-300 font-semibold' : 'text-slate-300'}>
+              {airData.isDemoData ? 'DEMO SIMULATION DATA' : 'Station Telemetry'}
+            </span>
             <span className="text-slate-600">/</span>
             <span className="text-slate-300">Observation Time: {airData.timestamp}</span>
+            {airData.isDemoData && (
+              <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                DEMO MODE • LIVE API UNAVAILABLE
+              </span>
+            )}
           </div>
           <div className="flex items-baseline gap-3">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">

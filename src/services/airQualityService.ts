@@ -4,44 +4,86 @@ export const CITY_PRESETS: CityPreset[] = [
   {
     name: 'Delhi NCR',
     country: 'India',
-    lat: 28.6139,
-    lon: 77.2090,
-    regionDescription: 'Severe winter thermal inversion, stubble smoke, and vehicular stagnation basin.'
+    lat: 28.61,
+    lon: 77.20,
+    regionDescription: 'Severe winter thermal inversion basin, stubble smoke, and vehicular stagnation.'
   },
   {
-    name: 'Lahore',
-    country: 'Pakistan',
-    lat: 31.5204,
-    lon: 74.3587,
-    regionDescription: 'High winter particulate trapped in slow-moving fog and biomass emissions.'
+    name: 'Mumbai',
+    country: 'India',
+    lat: 19.07,
+    lon: 72.87,
+    regionDescription: 'Coastal urban agglomeration with marine boundary layer and construction particulate.'
   },
   {
-    name: 'Beijing',
-    country: 'China',
-    lat: 39.9042,
-    lon: 116.4074,
-    regionDescription: 'Northern plain seasonal coal & vehicle winter smog trapped by Yanshan mountains.'
+    name: 'Bengaluru',
+    country: 'India',
+    lat: 12.97,
+    lon: 77.59,
+    regionDescription: 'Deccan plateau urban hub with traffic congestion corridors and localized emissions.'
   },
   {
-    name: 'Bakersfield, CA',
-    country: 'USA',
-    lat: 35.3733,
-    lon: -119.0187,
-    regionDescription: 'San Joaquin Valley winter stagnation basin with high particulate entrapment.'
+    name: 'Chennai',
+    country: 'India',
+    lat: 13.08,
+    lon: 80.27,
+    regionDescription: 'Coromandel coast metropolitan zone with sea breeze ventilation and industrial pockets.'
   },
   {
-    name: 'London',
-    country: 'United Kingdom',
-    lat: 51.5074,
-    lon: -0.1278,
-    regionDescription: 'Winter residential wood-burning and diesel particulate episodes.'
+    name: 'Kolkata',
+    country: 'India',
+    lat: 22.57,
+    lon: 88.36,
+    regionDescription: 'Lower Gangetic delta basin prone to winter fog, diesel exhaust, and particulate trapping.'
   },
   {
-    name: 'Jakarta',
-    country: 'Indonesia',
-    lat: -6.2088,
-    lon: 106.8456,
-    regionDescription: 'Urban basin with intense motorcycle and coal power plant transboundary pollution.'
+    name: 'Hyderabad',
+    country: 'India',
+    lat: 17.38,
+    lon: 78.48,
+    regionDescription: 'Telangana plateau with vehicle exhaust plumes and seasonal dust resuspension.'
+  },
+  {
+    name: 'Pune',
+    country: 'India',
+    lat: 18.52,
+    lon: 73.85,
+    regionDescription: 'Western Ghats valley topography with night-time thermal pooling and traffic soot.'
+  },
+  {
+    name: 'Ahmedabad',
+    country: 'India',
+    lat: 23.02,
+    lon: 72.57,
+    regionDescription: 'Sabarmati industrial basin with chemical and textile manufacturing emissions.'
+  },
+  {
+    name: 'Lucknow',
+    country: 'India',
+    lat: 26.84,
+    lon: 80.94,
+    regionDescription: 'Central Indo-Gangetic Plain with severe winter smog and low wind stagnation.'
+  },
+  {
+    name: 'Jaipur',
+    country: 'India',
+    lat: 26.91,
+    lon: 75.79,
+    regionDescription: 'Semi-arid desert fringe with mineral dust resuspension and urban traffic smoke.'
+  },
+  {
+    name: 'Kanpur',
+    country: 'India',
+    lat: 26.44,
+    lon: 80.33,
+    regionDescription: 'Industrial leather and coal cluster in the high-smog Gangetic inversion corridor.'
+  },
+  {
+    name: 'Patna',
+    country: 'India',
+    lat: 25.59,
+    lon: 85.13,
+    regionDescription: 'Dense Gangetic floodplain basin with persistent winter particulate stagnation.'
   }
 ];
 
@@ -52,6 +94,35 @@ export function getAQICategory(aqi: number): { category: AQICategory; color: str
   if (aqi <= 200) return { category: 'Unhealthy', color: '#ef4444' };
   if (aqi <= 300) return { category: 'Very Unhealthy', color: '#b91c1c' };
   return { category: 'Hazardous', color: '#881337' };
+}
+
+// Calculate geographical distance in km using Haversine formula
+export function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth radius in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * 
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c);
+}
+
+// Find closest city from CITY_PRESETS given user's coordinates
+export function findNearestCity(lat: number, lon: number): { city: CityPreset; distanceKm: number } {
+  let closest = CITY_PRESETS[0];
+  let minDistance = Infinity;
+
+  for (const preset of CITY_PRESETS) {
+    const dist = calculateDistanceKm(lat, lon, preset.lat, preset.lon);
+    if (dist < minDistance) {
+      minDistance = dist;
+      closest = preset;
+    }
+  }
+
+  return { city: closest, distanceKm: minDistance };
 }
 
 export async function fetchLiveAirQuality(city: CityPreset): Promise<AirQualityData> {
@@ -65,7 +136,7 @@ export async function fetchLiveAirQuality(city: CityPreset): Promise<AirQualityD
     ]);
 
     if (!aqiRes.ok || !weatherRes.ok) {
-      throw new Error('Network response was not ok');
+      throw new Error(`Open-Meteo API returned HTTP status ${aqiRes.status} / ${weatherRes.status}`);
     }
 
     const aqiJson = await aqiRes.json();
@@ -77,9 +148,9 @@ export async function fetchLiveAirQuality(city: CityPreset): Promise<AirQualityD
     const no2 = Math.round((aqiJson.current?.nitrogen_dioxide ?? 48.1) * 10) / 10;
     const ozone = Math.round((aqiJson.current?.ozone ?? 32.0) * 10) / 10;
 
-    const temp = Math.round(weatherJson.current?.temperature_2m ?? 18);
-    const humidity = Math.round(weatherJson.current?.relative_humidity_2m ?? 65);
-    const windSpeed = Math.round(weatherJson.current?.wind_speed_10m ?? 6);
+    const temp = Math.round(weatherJson.current?.temperature_2m ?? 24);
+    const humidity = Math.round(weatherJson.current?.relative_humidity_2m ?? 60);
+    const windSpeed = Math.round(weatherJson.current?.wind_speed_10m ?? 7);
 
     const { category, color } = getAQICategory(currentAqi);
 
@@ -140,11 +211,13 @@ export async function fetchLiveAirQuality(city: CityPreset): Promise<AirQualityD
         reason: 'Solar heating expands the atmospheric boundary layer to ~850m, dispersing trapped ground pollutants to diurnal minimum.',
         currentSafe: isCurrentVentSafe
       },
-      hourly: hourlySlice.length > 0 ? hourlySlice : getMockHourly(pm25, currentAqi)
+      hourly: hourlySlice.length > 0 ? hourlySlice : getMockHourly(pm25, currentAqi),
+      isLive: true,
+      isDemoData: false
     };
   } catch (err) {
-    console.warn('Falling back to local high-precision telemetry simulation:', err);
-    return getFallbackData(city);
+    console.warn('Open-Meteo live API call failed; activating calibrated demo fallback dataset:', err);
+    return getFallbackData(city, 'Live data unavailable for this city right now');
   }
 }
 
@@ -160,24 +233,41 @@ function getMockHourly(basePm25: number, baseAqi: number) {
   }));
 }
 
-export function getFallbackData(city: CityPreset): AirQualityData {
-  const defaultAqi = city.name.includes('Delhi') ? 385 : city.name.includes('Lahore') ? 410 : city.name.includes('Beijing') ? 215 : 172;
-  const { category, color } = getAQICategory(defaultAqi);
+export function getFallbackData(city: CityPreset, errorMessage?: string): AirQualityData {
+  // Calibrated city baseline estimates based on historical winter AQI trends
+  const baselines: Record<string, { aqi: number; pm25: number; pm10: number; no2: number; ozone: number; temp: number }> = {
+    'Delhi NCR': { aqi: 385, pm25: 288, pm10: 412, no2: 68, ozone: 32, temp: 19 },
+    'Patna': { aqi: 340, pm25: 255, pm10: 360, no2: 58, ozone: 30, temp: 21 },
+    'Kanpur': { aqi: 320, pm25: 240, pm10: 345, no2: 62, ozone: 34, temp: 20 },
+    'Lucknow': { aqi: 310, pm25: 232, pm10: 330, no2: 56, ozone: 31, temp: 20 },
+    'Kolkata': { aqi: 260, pm25: 195, pm10: 280, no2: 52, ozone: 28, temp: 23 },
+    'Ahmedabad': { aqi: 220, pm25: 165, pm10: 240, no2: 48, ozone: 36, temp: 25 },
+    'Jaipur': { aqi: 210, pm25: 158, pm10: 235, no2: 44, ozone: 38, temp: 22 },
+    'Mumbai': { aqi: 175, pm25: 110, pm10: 185, no2: 42, ozone: 35, temp: 28 },
+    'Pune': { aqi: 160, pm25: 98, pm10: 170, no2: 38, ozone: 33, temp: 24 },
+    'Hyderabad': { aqi: 145, pm25: 86, pm10: 155, no2: 36, ozone: 40, temp: 26 },
+    'Chennai': { aqi: 115, pm25: 64, pm10: 125, no2: 30, ozone: 42, temp: 29 },
+    'Bengaluru': { aqi: 95, pm25: 48, pm10: 105, no2: 28, ozone: 44, temp: 23 }
+  };
+
+  const matched = baselines[city.name] || { aqi: 180, pm25: 115, pm10: 190, no2: 45, ozone: 35, temp: 24 };
+  const { category, color } = getAQICategory(matched.aqi);
+
   return {
     city: city.name,
     country: city.country,
     latitude: city.lat,
     longitude: city.lon,
     timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    aqi: defaultAqi,
+    aqi: matched.aqi,
     category,
     color,
-    pm25: Math.round(defaultAqi * 0.75),
-    pm10: Math.round(defaultAqi * 1.3),
-    no2: 64,
-    ozone: 38,
-    temperature: 19,
-    humidity: 68,
+    pm25: matched.pm25,
+    pm10: matched.pm10,
+    no2: matched.no2,
+    ozone: matched.ozone,
+    temperature: matched.temp,
+    humidity: 65,
     windSpeed: 5,
     boundaryLayerHeight: 250,
     thermalInversionActive: true,
@@ -187,6 +277,9 @@ export function getFallbackData(city: CityPreset): AirQualityData {
       reason: 'Boundary layer expansion during peak sunlight disperses trapped surface smoke.',
       currentSafe: false
     },
-    hourly: getMockHourly(Math.round(defaultAqi * 0.75), defaultAqi)
+    hourly: getMockHourly(matched.pm25, matched.aqi),
+    isLive: false,
+    isDemoData: true,
+    errorMessage: errorMessage || 'Live data unavailable for this city right now'
   };
 }
