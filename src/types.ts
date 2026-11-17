@@ -13,9 +13,9 @@ export interface AirQualityData {
   pm10: number; // ug/m3
   no2: number; // ug/m3
   ozone: number; // ug/m3
-  temperature: number; // Celsius
-  humidity: number; // %
-  windSpeed: number; // km/h
+  temperature: number | null; // Celsius or null if unavailable
+  humidity: number | null; // % or null if unavailable
+  windSpeed: number | null; // km/h or null if unavailable
   boundaryLayerHeight: number; // meters
   thermalInversionActive: boolean;
   optimalVentilationWindow: {
@@ -34,6 +34,9 @@ export interface AirQualityData {
   isLive?: boolean;
   isDemoData?: boolean;
   errorMessage?: string;
+  lastFetchError?: string;
+  weatherUnavailable?: boolean;
+  weatherError?: string;
 }
 
 export type HouseholdType = 

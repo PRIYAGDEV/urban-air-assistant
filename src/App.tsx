@@ -102,22 +102,26 @@ export const App: React.FC = () => {
 
   // Live 1-Second continuous background auto-refresh & telemetry stream engine
   useEffect(() => {
-    if (!isLiveStream) return;
+    // Stop 1-second jitter on demo data — jitter only runs on verified live telemetry!
+    if (!isLiveStream || airData.isDemoData) return;
 
     const interval = setInterval(() => {
       setPacketCount((prev) => {
         const nextTick = prev + 1;
-        setAirData((prevData) => applyLiveTelemetryJitter(prevData, nextTick));
+        setAirData((prevData) => {
+          if (prevData.isDemoData) return prevData;
+          return applyLiveTelemetryJitter(prevData, nextTick);
+        });
         return nextTick;
       });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isLiveStream]);
+  }, [isLiveStream, airData.isDemoData]);
 
   // Periodic background re-anchor from Open-Meteo satellite API every 60 seconds
   useEffect(() => {
-    if (!isLiveStream) return;
+    if (!isLiveStream || airData.isDemoData) return;
 
     const bgAnchorInterval = setInterval(() => {
       fetchLiveAirQuality(selectedCity)
@@ -134,7 +138,7 @@ export const App: React.FC = () => {
     }, 60000);
 
     return () => clearInterval(bgAnchorInterval);
-  }, [isLiveStream, selectedCity]);
+  }, [isLiveStream, selectedCity, airData.isDemoData]);
 
   const handleManualRefresh = () => {
     setLoading(true);
@@ -144,8 +148,10 @@ export const App: React.FC = () => {
         setAirData(data);
         setLoading(false);
       })
-      .catch(() => {
-        setAirData(getFallbackData(selectedCity, 'Live data unavailable for this city right now'));
+      .catch((err) => {
+        const fallback = getFallbackData(selectedCity, 'Live data unavailable for this city right now');
+        baseAirDataRef.current = fallback;
+        setAirData(fallback);
         setLoading(false);
       });
   };
@@ -160,6 +166,7 @@ export const App: React.FC = () => {
         isLiveStream={isLiveStream}
         onToggleLiveStream={() => setIsLiveStream(!isLiveStream)}
         packetCount={packetCount}
+        onRetry={handleManualRefresh}
       />
 
       {/* Main Container - Sections separated by 48px */}
@@ -167,17 +174,24 @@ export const App: React.FC = () => {
         {/* Live 1-Second Auto-Refresh & Motion Photos Control Deck */}
         <div className="bg-white rounded-xl border border-[#DBEAFE] p-3 sm:p-4 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-3 animate-fade-up">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#F0FDF4] border border-[#86EFAC] text-[#166534] text-xs font-mono font-bold shadow-2xs">
-              <span className="relative flex h-2 w-2">
-                <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                  isLiveStream ? 'animate-heartbeat-1s bg-emerald-500' : 'bg-amber-500'
-                }`} />
-                <span className={`relative inline-flex rounded-full h-2 w-2 ${
-                  isLiveStream ? 'bg-emerald-600' : 'bg-amber-600'
-                }`} />
-              </span>
-              <span>{isLiveStream ? '1s LIVE AUTO-REFRESH ACTIVE' : 'AUTO-REFRESH PAUSED'}</span>
-            </div>
+            {airData.isDemoData ? (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] text-xs font-mono font-bold shadow-2xs">
+                <span className="w-2 h-2 rounded-full bg-[#D97706]" />
+                <span>DEMO DATA — auto-refresh paused</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#F0FDF4] border border-[#86EFAC] text-[#166534] text-xs font-mono font-bold shadow-2xs">
+                <span className="relative flex h-2 w-2">
+                  <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                    isLiveStream ? 'animate-heartbeat-1s bg-emerald-500' : 'bg-amber-500'
+                  }`} />
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                    isLiveStream ? 'bg-emerald-600' : 'bg-amber-600'
+                  }`} />
+                </span>
+                <span>{isLiveStream ? '1s LIVE AUTO-REFRESH ACTIVE' : 'AUTO-REFRESH PAUSED'}</span>
+              </div>
+            )}
 
             <div className="text-xs font-mono text-[#475569] flex items-center gap-2 flex-wrap">
               <span>•</span>
@@ -205,30 +219,44 @@ export const App: React.FC = () => {
               <span>Motion Photos: {motionPhotosEnabled ? 'ON' : 'OFF'}</span>
             </button>
 
-            {/* Toggle 1s Stream Auto-Refresh */}
-            <button
-              type="button"
-              onClick={() => setIsLiveStream(!isLiveStream)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all border flex items-center gap-1.5 shadow-2xs cursor-pointer ${
-                isLiveStream
-                  ? 'bg-[#1E40AF] text-white border-[#1E40AF] hover:bg-[#1D4ED8]'
-                  : 'bg-[#F8FAFC] text-[#1E40AF] border-[#DBEAFE] hover:bg-[#EFF6FF]'
-              }`}
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isLiveStream ? 'animate-spin' : ''}`} />
-              <span>{isLiveStream ? 'Auto-Syncing 1s' : 'Resume 1s Sync'}</span>
-            </button>
+            {/* Toggle 1s Stream Auto-Refresh or Retry Live Data if Demo */}
+            {airData.isDemoData ? (
+              <button
+                type="button"
+                onClick={handleManualRefresh}
+                disabled={loading}
+                className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all border flex items-center gap-1.5 shadow-2xs bg-[#D97706] text-white border-[#D97706] hover:bg-[#B45309] cursor-pointer"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                <span>Retry live data</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsLiveStream(!isLiveStream)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all border flex items-center gap-1.5 shadow-2xs cursor-pointer ${
+                  isLiveStream
+                    ? 'bg-[#1E40AF] text-white border-[#1E40AF] hover:bg-[#1D4ED8]'
+                    : 'bg-[#F8FAFC] text-[#1E40AF] border-[#DBEAFE] hover:bg-[#EFF6FF]'
+                }`}
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isLiveStream ? 'animate-spin' : ''}`} />
+                <span>{isLiveStream ? 'Auto-Syncing 1s' : 'Resume 1s Sync'}</span>
+              </button>
+            )}
 
-            {/* Manual Refresh Button */}
-            <button
-              type="button"
-              onClick={handleManualRefresh}
-              disabled={loading}
-              className="px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold bg-[#F8FAFC] hover:bg-[#F1F5F9] text-[#1E3A8A] border border-[#DBEAFE] transition-all disabled:opacity-50 cursor-pointer"
-              title="Manually force fetch from Open-Meteo Satellite API"
-            >
-              Force Sync
-            </button>
+            {/* Force Sync Button */}
+            {!airData.isDemoData && (
+              <button
+                type="button"
+                onClick={handleManualRefresh}
+                disabled={loading}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold bg-[#F8FAFC] hover:bg-[#F1F5F9] text-[#1E3A8A] border border-[#DBEAFE] transition-all disabled:opacity-50 cursor-pointer"
+                title="Manually force fetch from Open-Meteo Satellite API"
+              >
+                Force Sync
+              </button>
+            )}
           </div>
         </div>
 
@@ -240,6 +268,8 @@ export const App: React.FC = () => {
             loading={loading}
             isDemoData={airData.isDemoData}
             errorMessage={airData.errorMessage}
+            lastFetchError={airData.lastFetchError}
+            onRetry={handleManualRefresh}
           />
         </section>
 
@@ -250,6 +280,7 @@ export const App: React.FC = () => {
             profile={profile} 
             onCitySelect={setSelectedCity} 
             motionPhotosEnabled={motionPhotosEnabled}
+            onRetry={handleManualRefresh}
           />
         </section>
 

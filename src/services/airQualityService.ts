@@ -824,99 +824,161 @@ export function getFeaturedCityPresets(): CityPreset[] {
   return CITY_PRESETS.filter(c => FEATURED_VISUAL_CITY_NAMES.includes(c.name));
 }
 
-export async function fetchLiveAirQuality(city: CityPreset): Promise<AirQualityData> {
-  try {
-    const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${city.lat}&longitude=${city.lon}&current=pm10,pm2_5,nitrogen_dioxide,ozone,us_aqi&hourly=pm2_5,pm10,us_aqi&forecast_days=2`;
-    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m`;
+interface FetchResult<T> {
+  ok: boolean;
+  data?: T;
+  error?: string;
+  statusCode?: number;
+}
 
-    const [aqiRes, weatherRes] = await Promise.all([
-      fetch(aqiUrl),
-      fetch(weatherUrl)
-    ]);
+// Resilient fetch with 3 attempts, exponential backoff (2s / 4s / 8s), and 10s AbortController timeout
+async function fetchWithRetry<T>(
+  url: string,
+  label: string,
+  maxAttempts: number = 3,
+  backoffMs: number[] = [2000, 4000, 8000],
+  timeoutMs: number = 10000
+): Promise<FetchResult<T>> {
+  let lastError = '';
 
-    if (!aqiRes.ok || !weatherRes.ok) {
-      throw new Error(`Open-Meteo API returned HTTP status ${aqiRes.status} / ${weatherRes.status}`);
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      console.log(`[Open-Meteo ${label}] Attempt ${attempt}/${maxAttempts} requesting ${url}...`);
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText || 'Server Error'}`);
+      }
+
+      const data = await response.json();
+      console.log(`[Open-Meteo ${label}] Attempt ${attempt}/${maxAttempts} succeeded (HTTP ${response.status}).`);
+      return { ok: true, data, statusCode: response.status };
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      const isAbort = err.name === 'AbortError';
+      const msg = isAbort ? `Request timed out after ${timeoutMs / 1000}s` : (err.message || 'Failed to fetch');
+      lastError = msg;
+
+      console.warn(`[Open-Meteo ${label}] Attempt ${attempt}/${maxAttempts} failed: ${msg}`);
+
+      if (attempt < maxAttempts) {
+        const delay = backoffMs[attempt - 1] || 2000;
+        console.log(`[Open-Meteo ${label}] Retrying in ${delay / 1000}s (Attempt ${attempt + 1}/${maxAttempts})...`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
     }
-
-    const aqiJson = await aqiRes.json();
-    const weatherJson = await weatherRes.json();
-
-    const currentAqi = Math.round(aqiJson.current?.us_aqi ?? 185);
-    const pm25 = Math.round((aqiJson.current?.pm2_5 ?? 92.4) * 10) / 10;
-    const pm10 = Math.round((aqiJson.current?.pm10 ?? 145.2) * 10) / 10;
-    const no2 = Math.round((aqiJson.current?.nitrogen_dioxide ?? 48.1) * 10) / 10;
-    const ozone = Math.round((aqiJson.current?.ozone ?? 32.0) * 10) / 10;
-
-    const temp = Math.round(weatherJson.current?.temperature_2m ?? 24);
-    const humidity = Math.round(weatherJson.current?.relative_humidity_2m ?? 60);
-    const windSpeed = Math.round(weatherJson.current?.wind_speed_10m ?? 7);
-
-    const { category, color } = getAQICategory(currentAqi);
-
-    const currentHour = new Date().getHours();
-    const isMorningOrNight = currentHour < 10 || currentHour >= 18;
-    const thermalInversionActive = isMorningOrNight && windSpeed < 12;
-    const boundaryLayerHeight = thermalInversionActive ? 220 : 850;
-
-    // Build hourly trend
-    const hourlyTimes = aqiJson.hourly?.time ?? [];
-    const hourlyPm25 = aqiJson.hourly?.pm2_5 ?? [];
-    const hourlyAqi = aqiJson.hourly?.us_aqi ?? [];
-
-    const nowIndex = hourlyTimes.findIndex((t: string) => {
-      const d = new Date(t);
-      return d.getHours() === currentHour;
-    });
-
-    const startIndex = nowIndex >= 0 ? nowIndex : 0;
-    const hourlySlice = hourlyTimes.slice(startIndex, startIndex + 12).map((t: string, idx: number) => {
-      const d = new Date(t);
-      const h = d.getHours();
-      const hourLabel = `${h % 12 === 0 ? 12 : h % 12} ${h >= 12 ? 'PM' : 'AM'}`;
-      const isVent = h >= 13 && h <= 15;
-      return {
-        time: t,
-        hourLabel,
-        pm25: Math.round(hourlyPm25[startIndex + idx] ?? pm25),
-        aqi: Math.round(hourlyAqi[startIndex + idx] ?? currentAqi),
-        isVentilationWindow: isVent
-      };
-    });
-
-    const isCurrentVentSafe = currentHour >= 13 && currentHour <= 15 && currentAqi < 250;
-
-    return {
-      city: city.name,
-      country: city.country,
-      latitude: city.lat,
-      longitude: city.lon,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      aqi: currentAqi,
-      category,
-      color,
-      pm25,
-      pm10,
-      no2,
-      ozone,
-      temperature: temp,
-      humidity,
-      windSpeed,
-      boundaryLayerHeight,
-      thermalInversionActive,
-      optimalVentilationWindow: {
-        start: '13:30',
-        end: '15:15',
-        reason: 'Solar thermal heating expands the atmospheric boundary layer, dispersing ground-level particulate.',
-        currentSafe: isCurrentVentSafe
-      },
-      hourly: hourlySlice.length > 0 ? hourlySlice : getMockHourly(pm25, currentAqi),
-      isLive: true,
-      isDemoData: false
-    };
-  } catch (err) {
-    console.warn('Open-Meteo live API call failed; activating calibrated demo fallback dataset:', err);
-    return getFallbackData(city, 'Live data unavailable for this city right now');
   }
+
+  console.error(`[Open-Meteo ${label}] All ${maxAttempts} attempts failed. Last error: ${lastError}`);
+  return { ok: false, error: lastError };
+}
+
+export async function fetchLiveAirQuality(city: CityPreset): Promise<AirQualityData> {
+  const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${city.lat}&longitude=${city.lon}&current=pm10,pm2_5,nitrogen_dioxide,ozone,us_aqi&hourly=pm2_5,pm10,us_aqi&forecast_days=2`;
+  const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m`;
+
+  // Fetch air quality and weather INDEPENDENTLY (stop using Promise.all)
+  // Air quality call with 3 retries (2s, 4s, 8s backoff, 10s timeout)
+  const aqiResult = await fetchWithRetry<any>(aqiUrl, 'AirQuality');
+
+  // ONLY fall back to demo when the AIR QUALITY call itself fails after all retries
+  if (!aqiResult.ok || !aqiResult.data) {
+    const errorTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const fullErrorMessage = `${aqiResult.error || 'Failed to fetch'} — ${errorTimestamp}`;
+    console.warn(`[Open-Meteo] Live Air Quality fetch failed after retries; activating demo fallback: ${fullErrorMessage}`);
+    return getFallbackData(city, fullErrorMessage);
+  }
+
+  const aqiJson = aqiResult.data;
+
+  // Weather call with retry - completely independent of air quality!
+  const weatherResult = await fetchWithRetry<any>(weatherUrl, 'Weather');
+  const weatherJson = weatherResult.ok ? weatherResult.data : null;
+  const weatherUnavailable = !weatherResult.ok || !weatherJson;
+
+  if (weatherUnavailable) {
+    console.warn('[Open-Meteo Weather] Weather telemetry unavailable; displaying live air quality with weather fields marked unavailable.');
+  }
+
+  const currentAqi = Math.round(aqiJson.current?.us_aqi ?? 185);
+  const pm25 = Math.round((aqiJson.current?.pm2_5 ?? 92.4) * 10) / 10;
+  const pm10 = Math.round((aqiJson.current?.pm10 ?? 145.2) * 10) / 10;
+  const no2 = Math.round((aqiJson.current?.nitrogen_dioxide ?? 48.1) * 10) / 10;
+  const ozone = Math.round((aqiJson.current?.ozone ?? 32.0) * 10) / 10;
+
+  // Weather fields (marked null if weather call failed)
+  const temp = weatherUnavailable ? null : Math.round(weatherJson.current?.temperature_2m ?? 24);
+  const humidity = weatherUnavailable ? null : Math.round(weatherJson.current?.relative_humidity_2m ?? 60);
+  const windSpeed = weatherUnavailable ? null : Math.round(weatherJson.current?.wind_speed_10m ?? 7);
+
+  const { category, color } = getAQICategory(currentAqi);
+
+  const currentHour = new Date().getHours();
+  const isMorningOrNight = currentHour < 10 || currentHour >= 18;
+  const thermalInversionActive = isMorningOrNight && (windSpeed === null ? true : windSpeed < 12);
+  const boundaryLayerHeight = thermalInversionActive ? 220 : 850;
+
+  // Build hourly trend
+  const hourlyTimes = aqiJson.hourly?.time ?? [];
+  const hourlyPm25 = aqiJson.hourly?.pm2_5 ?? [];
+  const hourlyAqi = aqiJson.hourly?.us_aqi ?? [];
+
+  const nowIndex = hourlyTimes.findIndex((t: string) => {
+    const d = new Date(t);
+    return d.getHours() === currentHour;
+  });
+
+  const startIndex = nowIndex >= 0 ? nowIndex : 0;
+  const hourlySlice = hourlyTimes.slice(startIndex, startIndex + 12).map((t: string, idx: number) => {
+    const d = new Date(t);
+    const h = d.getHours();
+    const hourLabel = `${h % 12 === 0 ? 12 : h % 12} ${h >= 12 ? 'PM' : 'AM'}`;
+    const isVent = h >= 13 && h <= 15;
+    return {
+      time: t,
+      hourLabel,
+      pm25: Math.round(hourlyPm25[startIndex + idx] ?? pm25),
+      aqi: Math.round(hourlyAqi[startIndex + idx] ?? currentAqi),
+      isVentilationWindow: isVent
+    };
+  });
+
+  const isCurrentVentSafe = currentHour >= 13 && currentHour <= 15 && currentAqi < 250;
+
+  return {
+    city: city.name,
+    country: city.country,
+    latitude: city.lat,
+    longitude: city.lon,
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    aqi: currentAqi,
+    category,
+    color,
+    pm25,
+    pm10,
+    no2,
+    ozone,
+    temperature: temp,
+    humidity,
+    windSpeed,
+    boundaryLayerHeight,
+    thermalInversionActive,
+    optimalVentilationWindow: {
+      start: '13:30',
+      end: '15:15',
+      reason: 'Solar thermal heating expands the atmospheric boundary layer, dispersing ground-level particulate.',
+      currentSafe: isCurrentVentSafe
+    },
+    hourly: hourlySlice.length > 0 ? hourlySlice : getMockHourly(pm25, currentAqi),
+    isLive: true,
+    isDemoData: false,
+    weatherUnavailable,
+    weatherError: weatherResult.error
+  };
 }
 
 function getMockHourly(basePm25: number, baseAqi: number) {
@@ -999,7 +1061,8 @@ export function getFallbackData(city: CityPreset, errorMessage?: string): AirQua
     hourly: getMockHourly(matched.pm25, matched.aqi),
     isLive: false,
     isDemoData: true,
-    errorMessage: errorMessage || 'Live data unavailable for this city right now'
+    errorMessage: errorMessage || 'Live data unavailable for this city right now',
+    lastFetchError: errorMessage || ('Failed to fetch — ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
   };
 }
 

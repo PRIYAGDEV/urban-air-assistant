@@ -10,6 +10,7 @@ interface HeaderProps {
   isLiveStream?: boolean;
   onToggleLiveStream?: () => void;
   packetCount?: number;
+  onRetry?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -19,6 +20,7 @@ export const Header: React.FC<HeaderProps> = ({
   isLiveStream = true,
   onToggleLiveStream,
   packetCount = 1,
+  onRetry,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-[#DBEAFE] px-4 lg:px-8 py-3 shadow-xs">
@@ -56,36 +58,49 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right Station Controls */}
         <div className="flex items-center flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto justify-end">
-          {/* Live 1-Second Streaming Indicator Button */}
-          <button
-            type="button"
-            onClick={onToggleLiveStream}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-mono font-bold transition-all shadow-xs cursor-pointer ${
-              isLiveStream
-                ? 'bg-[#F0FDF4] hover:bg-[#DCFCE7] border-[#86EFAC] text-[#166534]'
-                : 'bg-[#FFFBEB] hover:bg-[#FEF3C7] border-[#FDE68A] text-[#92400E]'
-            }`}
-            title="Click to toggle 1s background telemetry auto-refresh"
-          >
-            <span className="relative flex h-2 w-2">
-              <span
-                className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                  isLiveStream ? 'animate-heartbeat-1s bg-emerald-500' : 'bg-amber-500'
-                }`}
-              />
-              <span
-                className={`relative inline-flex rounded-full h-2 w-2 ${
-                  isLiveStream ? 'bg-emerald-600' : 'bg-amber-600'
-                }`}
-              />
-            </span>
-            <span className="hidden md:inline">
-              {isLiveStream ? `1s LIVE AUTO-REFRESH (#${packetCount})` : 'AUTO-REFRESH PAUSED'}
-            </span>
-            <span className="md:hidden">
-              {isLiveStream ? `1s (#${packetCount})` : 'PAUSED'}
-            </span>
-          </button>
+          {/* Status Indicator Button */}
+          {airData.isDemoData ? (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-mono font-bold transition-all shadow-xs cursor-pointer bg-[#FEF3C7] hover:bg-[#FDE68A] border-[#FDE68A] text-[#92400E]"
+              title="Demo data active — click to retry live Open-Meteo telemetry"
+            >
+              <span className="w-2 h-2 rounded-full bg-[#D97706]" />
+              <span className="hidden md:inline">DEMO DATA — auto-refresh paused</span>
+              <span className="md:hidden">DEMO PAUSED</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onToggleLiveStream}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-mono font-bold transition-all shadow-xs cursor-pointer ${
+                isLiveStream
+                  ? 'bg-[#F0FDF4] hover:bg-[#DCFCE7] border-[#86EFAC] text-[#166534]'
+                  : 'bg-[#FFFBEB] hover:bg-[#FEF3C7] border-[#FDE68A] text-[#92400E]'
+              }`}
+              title="Click to toggle 1s background telemetry auto-refresh"
+            >
+              <span className="relative flex h-2 w-2">
+                <span
+                  className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                    isLiveStream ? 'animate-heartbeat-1s bg-emerald-500' : 'bg-amber-500'
+                  }`}
+                />
+                <span
+                  className={`relative inline-flex rounded-full h-2 w-2 ${
+                    isLiveStream ? 'bg-emerald-600' : 'bg-amber-600'
+                  }`}
+                />
+              </span>
+              <span className="hidden md:inline">
+                {isLiveStream ? `1s LIVE AUTO-REFRESH (#${packetCount})` : 'AUTO-REFRESH PAUSED'}
+              </span>
+              <span className="md:hidden">
+                {isLiveStream ? `1s (#${packetCount})` : 'PAUSED'}
+              </span>
+            </button>
+          )}
 
           {/* Quick Station Dropdown */}
           <div className="relative flex items-center bg-[#F8FAFC] hover:bg-[#F1F5F9] rounded-lg border border-[#DBEAFE] px-3 py-1.5 text-xs transition-colors">

@@ -9,7 +9,8 @@ import {
   Camera,
   MapPin,
   ChevronRight,
-  Radio
+  Radio,
+  RefreshCw
 } from 'lucide-react';
 import { AirQualityData, UserProfile, CityPreset } from '../types';
 import { calculateOERI } from '../services/decisionEngine';
@@ -20,6 +21,7 @@ interface AirQualityHeroProps {
   profile: UserProfile;
   onCitySelect?: (city: CityPreset) => void;
   motionPhotosEnabled?: boolean;
+  onRetry?: () => void;
 }
 
 // Smooth numerical count-up hook for cinematic telemetry transitions
@@ -54,7 +56,8 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
   airData, 
   profile, 
   onCitySelect,
-  motionPhotosEnabled = true
+  motionPhotosEnabled = true,
+  onRetry
 }) => {
   const oeri = calculateOERI(airData, profile);
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
@@ -194,24 +197,45 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
             </div>
 
             {/* Live Inversion Radar Badge & Timestamp */}
-            <div className="flex flex-wrap items-center gap-2">
-              {airData.isDemoData ? (
-                <span className="px-2.5 py-1 rounded-lg bg-[#DC2626] text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                  DEMO DATA • SENSOR OFFLINE
-                </span>
-              ) : (
-                <span className="px-2.5 py-1 rounded-lg bg-[#16A34A] text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xs">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-300" />
+            <div className="flex flex-col sm:items-end gap-1.5">
+              <div className="flex flex-wrap items-center gap-2">
+                {airData.isDemoData ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-2.5 py-1 rounded-lg bg-[#DC2626] text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xs">
+                      <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                      DEMO DATA • SENSOR OFFLINE
+                    </span>
+                    {onRetry && (
+                      <button
+                        type="button"
+                        onClick={onRetry}
+                        className="px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-white border border-white/30 text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
+                        title="Retry fetching live data from Open-Meteo"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        <span>Retry live data</span>
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <span className="px-2.5 py-1 rounded-lg bg-[#16A34A] text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xs">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-300" />
+                    </span>
+                    LIVE TELEMETRY
                   </span>
-                  LIVE TELEMETRY
+                )}
+                <span className="px-2.5 py-1 rounded-lg bg-black/40 text-slate-300 border border-white/20 text-xs font-mono">
+                  {airData.timestamp}
                 </span>
+              </div>
+              {/* Show real fetch error under demo badge */}
+              {airData.isDemoData && airData.lastFetchError && (
+                <div className="text-[10px] font-mono text-amber-200 bg-black/60 px-2 py-0.5 rounded border border-amber-500/30">
+                  Last fetch error: {airData.lastFetchError}
+                </div>
               )}
-              <span className="px-2.5 py-1 rounded-lg bg-black/40 text-slate-300 border border-white/20 text-xs font-mono">
-                {airData.timestamp}
-              </span>
             </div>
           </div>
 
@@ -363,7 +387,7 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
               <span>{visual.photoCredit}</span>
             </div>
             <div className="text-slate-400">
-              Landmark: <strong className="text-white">{visual.landmark}</strong> • Boundary Layer: ~{airData.boundaryLayerHeight}m • Wind: {airData.windSpeed} km/h
+              Landmark: <strong className="text-white">{visual.landmark}</strong> • Boundary Layer: ~{airData.boundaryLayerHeight}m • Wind: {airData.weatherUnavailable || airData.windSpeed === null ? <span className="text-amber-300 font-bold">unavailable</span> : `${airData.windSpeed} km/h`}
             </div>
           </div>
         </div>

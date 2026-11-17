@@ -10,7 +10,8 @@ import {
   Globe, 
   Camera, 
   LayoutGrid, 
-  ListFilter 
+  ListFilter,
+  RefreshCw
 } from 'lucide-react';
 import { CityPreset } from '../types';
 import { CITY_PRESETS, findNearestCity, getCityVisual } from '../services/airQualityService';
@@ -21,6 +22,8 @@ interface CitySelectorProps {
   loading: boolean;
   isDemoData?: boolean;
   errorMessage?: string;
+  lastFetchError?: string;
+  onRetry?: () => void;
 }
 
 export const CitySelector: React.FC<CitySelectorProps> = ({
@@ -29,6 +32,8 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
   loading,
   isDemoData,
   errorMessage,
+  lastFetchError,
+  onRetry,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -401,23 +406,42 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
         </div>
       )}
 
-      {/* API Error & DEMO Data Warning Banner */}
+      {/* API Error & DEMO Data Warning Banner with Real Error Display and Retry Button */}
       {isDemoData && !loading && (
-        <div className="bg-[#FEF3C7] border-l-4 border-[#D97706] rounded-r-lg p-3.5 flex items-start gap-3 text-xs text-[#92400E] animate-fade-up">
-          <AlertTriangle className="w-5 h-5 text-[#D97706] shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <div className="font-bold text-sm text-[#78350F]">
-              Live data unavailable for this city right now
+        <div className="bg-[#FEF3C7] border-l-4 border-[#D97706] rounded-r-lg p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-[#92400E] animate-fade-up">
+          <div className="flex items-start gap-3 flex-1">
+            <AlertTriangle className="w-5 h-5 text-[#D97706] shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <div className="font-bold text-sm text-[#78350F] flex items-center gap-2">
+                <span>Live data unavailable for this city right now</span>
+                <span className="text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded bg-[#D97706] text-white">
+                  DEMO DATA
+                </span>
+              </div>
+              <p className="text-xs text-[#92400E] mt-1 leading-relaxed">
+                {errorMessage || 'Satellite telemetry service connection timed out.'} The dashboard is currently displaying{' '}
+                <strong className="uppercase underline font-bold">calibrated historical DEMO data</strong>{' '}
+                modeled from regional winter smog baselines. This is simulated data, not real-time sensor measurements.
+              </p>
+              {lastFetchError && (
+                <div className="text-[11px] font-mono text-[#B45309] font-bold mt-1.5 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#D97706]" />
+                  <span>Last fetch error: {lastFetchError}</span>
+                </div>
+              )}
             </div>
-            <p className="text-xs text-[#92400E] mt-1 leading-relaxed">
-              {errorMessage || 'Satellite telemetry service connection timed out.'} The dashboard is currently displaying{' '}
-              <strong className="uppercase underline font-bold">calibrated historical DEMO data</strong>{' '}
-              modeled from regional winter smog baselines. This is simulated data, not real-time sensor measurements.
-            </p>
           </div>
-          <span className="text-[10px] uppercase font-mono font-bold px-2 py-1 rounded bg-[#D97706] text-white shrink-0">
-            DEMO DATA
-          </span>
+
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="px-3 py-1.5 rounded-lg bg-[#D97706] hover:bg-[#B45309] text-white font-mono text-xs font-bold shrink-0 flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Retry live data</span>
+            </button>
+          )}
         </div>
       )}
     </div>
