@@ -28,7 +28,10 @@ import {
   RefreshCw,
   Camera,
   Radio,
-  Sparkles
+  Sparkles,
+  RotateCw,
+  Play,
+  Pause
 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -57,6 +60,20 @@ export const App: React.FC = () => {
   const [motionPhotosEnabled, setMotionPhotosEnabled] = useState<boolean>(true);
   const baseAirDataRef = useRef<AirQualityData>(airData);
 
+  // Auto-Tour 5-Second Cities Loop State (Enabled by default as requested)
+  const [autoCycleCities, setAutoCycleCities] = useState<boolean>(true);
+  const [cycleCountdown, setCycleCountdown] = useState<number>(5);
+  const cityCacheRef = useRef<Record<string, AirQualityData>>({});
+
+  // Compute next city in the continuous loop
+  const nextCityIndex = (CITY_PRESETS.findIndex((c) => c.name === selectedCity.name) + 1) % CITY_PRESETS.length;
+  const nextCity = CITY_PRESETS[nextCityIndex];
+
+  const handleCitySelect = (city: CityPreset) => {
+    setSelectedCity(city);
+    setCycleCountdown(5); // Reset 5-second timer when user selects a city
+  };
+
   const [profile, setProfile] = useState<UserProfile>({
     name: 'Priyag & Family',
     householdType: 'family_with_infants',
@@ -68,6 +85,28 @@ export const App: React.FC = () => {
     hasPurifier: false
   });
 
+  // 5-Second Automatic City Rotation Loop Engine
+  useEffect(() => {
+    if (!autoCycleCities) return;
+
+    const cycleTimer = setInterval(() => {
+      setCycleCountdown((prev) => {
+        if (prev <= 1) {
+          // Time to rotate to next city in loop!
+          setSelectedCity((curr) => {
+            const currIdx = CITY_PRESETS.findIndex((c) => c.name === curr.name);
+            const nextIdx = (currIdx + 1) % CITY_PRESETS.length;
+            return CITY_PRESETS[nextIdx];
+          });
+          return 5;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(cycleTimer);
+  }, [autoCycleCities]);
+
   // Load fresh air quality data whenever selected city changes
   useEffect(() => {
     let isMounted = true;
@@ -77,9 +116,21 @@ export const App: React.FC = () => {
       localStorage.setItem('auraguard_selected_city', selectedCity.name);
     }
 
+    // Instant optimistic render from cache or fallback so UI updates instantly without blank screen
+    if (cityCacheRef.current[selectedCity.name]) {
+      const cached = cityCacheRef.current[selectedCity.name];
+      baseAirDataRef.current = cached;
+      setAirData(cached);
+    } else {
+      const initial = getFallbackData(selectedCity);
+      baseAirDataRef.current = initial;
+      setAirData(initial);
+    }
+
     fetchLiveAirQuality(selectedCity)
       .then((data) => {
         if (isMounted) {
+          cityCacheRef.current[selectedCity.name] = data;
           baseAirDataRef.current = data;
           setAirData(data);
           setLoading(false);
@@ -162,11 +213,17 @@ export const App: React.FC = () => {
       <Header
         airData={airData}
         selectedCity={selectedCity}
-        onCityChange={setSelectedCity}
+        onCityChange={handleCitySelect}
         isLiveStream={isLiveStream}
         onToggleLiveStream={() => setIsLiveStream(!isLiveStream)}
         packetCount={packetCount}
         onRetry={handleManualRefresh}
+        autoCycleCities={autoCycleCities}
+        cycleCountdown={cycleCountdown}
+        onToggleAutoCycle={() => {
+          setAutoCycleCities(!autoCycleCities);
+          if (!autoCycleCities) setCycleCountdown(5);
+        }}
       />
 
       {/* Main Container - Sections separated by 48px */}
@@ -193,6 +250,20 @@ export const App: React.FC = () => {
               </div>
             )}
 
+            {/* 5s Auto-Tour Indicator Badge */}
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono font-bold shadow-2xs transition-all ${
+              autoCycleCities
+                ? 'bg-[#EFF6FF] border-[#93C5FD] text-[#1E40AF]'
+                : 'bg-[#F8FAFC] border-[#DBEAFE] text-[#64748B]'
+            }`}>
+              <RotateCw className={`w-3.5 h-3.5 ${autoCycleCities ? 'animate-spin' : ''}`} style={{ animationDuration: '5s' }} />
+              <span>
+                {autoCycleCities
+                  ? `5s AUTO-TOUR: NEXT -> ${nextCity.name.toUpperCase()} (${cycleCountdown}s)`
+                  : '5s AUTO-TOUR: PAUSED'}
+              </span>
+            </div>
+
             <div className="text-xs font-mono text-[#475569] flex items-center gap-2 flex-wrap">
               <span>•</span>
               <span>Telemetry Packet: <strong className="text-[#1E40AF]">#{packetCount}</strong> (1000ms tick)</span>
@@ -204,6 +275,24 @@ export const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 self-end md:self-auto flex-wrap">
+            {/* Auto-Cycle Cities (5s Loop) Toggle Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setAutoCycleCities(!autoCycleCities);
+                if (!autoCycleCities) setCycleCountdown(5);
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all border flex items-center gap-1.5 shadow-2xs cursor-pointer ${
+                autoCycleCities
+                  ? 'bg-[#1E40AF] text-white border-[#1E40AF] hover:bg-[#1D4ED8]'
+                  : 'bg-[#F8FAFC] text-[#1E40AF] border-[#DBEAFE] hover:bg-[#EFF6FF]'
+              }`}
+              title="Toggle automatic 5-second continuous city rotation loop"
+            >
+              {autoCycleCities ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+              <span>{autoCycleCities ? `5s Loop: ON (${cycleCountdown}s)` : 'Resume 5s Tour'}</span>
+            </button>
+
             {/* Motion Photos Toggle Button */}
             <button
               type="button"
@@ -264,12 +353,19 @@ export const App: React.FC = () => {
         <section aria-label="City Selector">
           <CitySelector
             selectedCity={selectedCity}
-            onCitySelect={setSelectedCity}
+            onCitySelect={handleCitySelect}
             loading={loading}
             isDemoData={airData.isDemoData}
             errorMessage={airData.errorMessage}
             lastFetchError={airData.lastFetchError}
             onRetry={handleManualRefresh}
+            autoCycleCities={autoCycleCities}
+            cycleCountdown={cycleCountdown}
+            nextCityName={nextCity.name}
+            onToggleAutoCycle={() => {
+              setAutoCycleCities(!autoCycleCities);
+              if (!autoCycleCities) setCycleCountdown(5);
+            }}
           />
         </section>
 

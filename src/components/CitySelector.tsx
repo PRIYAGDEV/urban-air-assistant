@@ -11,7 +11,10 @@ import {
   Camera, 
   LayoutGrid, 
   ListFilter,
-  RefreshCw
+  RefreshCw,
+  RotateCw,
+  Play,
+  Pause
 } from 'lucide-react';
 import { CityPreset } from '../types';
 import { CITY_PRESETS, findNearestCity, getCityVisual } from '../services/airQualityService';
@@ -24,6 +27,10 @@ interface CitySelectorProps {
   errorMessage?: string;
   lastFetchError?: string;
   onRetry?: () => void;
+  autoCycleCities?: boolean;
+  cycleCountdown?: number;
+  nextCityName?: string;
+  onToggleAutoCycle?: () => void;
 }
 
 export const CitySelector: React.FC<CitySelectorProps> = ({
@@ -34,6 +41,10 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
   errorMessage,
   lastFetchError,
   onRetry,
+  autoCycleCities = true,
+  cycleCountdown = 5,
+  nextCityName,
+  onToggleAutoCycle,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -110,9 +121,9 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
 
   return (
     <div className="bg-white rounded-xl border border-[#DBEAFE] p-4 sm:p-5 shadow-xs space-y-4 animate-fade-up">
-      {/* Header bar with Hindi label & active status */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#DBEAFE]">
-        <div className="flex items-center gap-2">
+      {/* Header bar with Hindi label, active status & 5s Auto-Loop Tour Controller */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-[#DBEAFE]">
+        <div className="flex items-center gap-2 flex-wrap">
           <MapPin className="w-4 h-4 text-[#1E40AF]" />
           <h2 className="text-sm font-bold text-[#1E3A8A] uppercase font-sans">
             Global &amp; Indian Monitoring Stations ({CITY_PRESETS.length} Cities)
@@ -121,8 +132,52 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
             शहर बदलें
           </span>
         </div>
-        <div className="text-xs font-mono text-[#475569]">
-          Active: <strong className="text-[#1E40AF]">{selectedCity.name}, {selectedCity.country}</strong> ({selectedCity.lat.toFixed(2)}°, {selectedCity.lon.toFixed(2)}°)
+
+        {/* Active station & 5s Auto-Tour indicator */}
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          <div className="text-xs font-mono text-[#475569]">
+            Active: <strong className="text-[#1E40AF]">{selectedCity.name}, {selectedCity.country}</strong> ({selectedCity.lat.toFixed(2)}°, {selectedCity.lon.toFixed(2)}°)
+          </div>
+
+          {onToggleAutoCycle && (
+            <div className="flex items-center gap-2 bg-[#F1F5F9] border border-[#DBEAFE] rounded-lg px-2.5 py-1">
+              <button
+                type="button"
+                onClick={onToggleAutoCycle}
+                className={`flex items-center gap-1.5 text-xs font-mono font-bold px-2 py-0.5 rounded transition-all cursor-pointer ${
+                  autoCycleCities
+                    ? 'bg-[#1E40AF] text-white shadow-2xs hover:bg-[#1D4ED8]'
+                    : 'bg-white text-[#475569] border border-[#CBD5E1] hover:text-[#1E3A8A]'
+                }`}
+                title="Toggle 5-second automatic city cycling loop"
+              >
+                {autoCycleCities ? (
+                  <>
+                    <Pause className="w-3 h-3" />
+                    <span>Pause Tour</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3 h-3" />
+                    <span>Resume 5s Tour</span>
+                  </>
+                )}
+              </button>
+
+              {autoCycleCities && (
+                <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#1E40AF]">
+                  <RotateCw className="w-3 h-3 animate-spin" style={{ animationDuration: '4s' }} />
+                  <span>Next: <strong>{nextCityName || 'Next'}</strong> ({cycleCountdown}s)</span>
+                  <div className="w-12 h-1.5 bg-[#DBEAFE] rounded-full overflow-hidden hidden sm:block">
+                    <div
+                      className="h-full bg-[#3B82F6] transition-all duration-1000 ease-linear rounded-full"
+                      style={{ width: `${Math.max(0, Math.min(100, ((5 - (cycleCountdown ?? 5)) / 5) * 100))}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wind, MapPin, AlertTriangle, ChevronDown, Radio } from 'lucide-react';
+import { Wind, MapPin, AlertTriangle, ChevronDown, Radio, RotateCw, Play, Pause } from 'lucide-react';
 import { AirQualityData, CityPreset } from '../types';
 import { CITY_PRESETS } from '../services/airQualityService';
 
@@ -11,6 +11,9 @@ interface HeaderProps {
   onToggleLiveStream?: () => void;
   packetCount?: number;
   onRetry?: () => void;
+  autoCycleCities?: boolean;
+  cycleCountdown?: number;
+  onToggleAutoCycle?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -21,6 +24,9 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleLiveStream,
   packetCount = 1,
   onRetry,
+  autoCycleCities = true,
+  cycleCountdown = 5,
+  onToggleAutoCycle,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-[#DBEAFE] px-4 lg:px-8 py-3 shadow-xs">
@@ -98,6 +104,28 @@ export const Header: React.FC<HeaderProps> = ({
               </span>
               <span className="md:hidden">
                 {isLiveStream ? `1s (#${packetCount})` : 'PAUSED'}
+              </span>
+            </button>
+          )}
+
+          {/* 5s Auto-Tour Cities Loop Toggle */}
+          {onToggleAutoCycle && (
+            <button
+              type="button"
+              onClick={onToggleAutoCycle}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-mono font-bold transition-all shadow-xs cursor-pointer ${
+                autoCycleCities
+                  ? 'bg-[#EFF6FF] hover:bg-[#DBEAFE] border-[#93C5FD] text-[#1E40AF]'
+                  : 'bg-[#F8FAFC] hover:bg-[#F1F5F9] border-[#DBEAFE] text-[#64748B]'
+              }`}
+              title="Click to toggle automatic 5-second continuous city rotation loop"
+            >
+              <RotateCw className={`w-3 h-3 ${autoCycleCities ? 'animate-spin' : ''}`} style={{ animationDuration: '5s' }} />
+              <span className="hidden lg:inline">
+                {autoCycleCities ? `5s TOUR: NEXT (${cycleCountdown}s)` : '5s TOUR: PAUSED'}
+              </span>
+              <span className="lg:hidden">
+                {autoCycleCities ? `5s (${cycleCountdown}s)` : 'TOUR PAUSED'}
               </span>
             </button>
           )}
