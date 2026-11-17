@@ -109,20 +109,22 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
 
   // 6 diurnal points for real SVG chart
   const hourlyPoints = airData.hourly.slice(0, 6);
-  const maxPm25 = Math.max(...hourlyPoints.map(p => p.pm25), 350);
+  // Full 0–500 µg/m³ scale with headroom so high particulate values (317, 360 µg/m³) are never clipped
+  const maxPm25 = 500;
 
   // SVG Chart Dimensions
   const chartWidth = 640;
-  const chartHeight = 220;
-  const paddingX = 45;
-  const paddingY = 30;
+  const chartHeight = 245;
+  const paddingX = 48;
+  const paddingY = 38;
   const usableWidth = chartWidth - paddingX * 2;
-  const usableHeight = chartHeight - paddingY * 2;
+  const usableHeight = 160;
+  const baselineY = paddingY + usableHeight;
 
   // Calculate coordinates for SVG line
   const pointsCoords = hourlyPoints.map((p, idx) => {
     const x = paddingX + (idx / (hourlyPoints.length - 1)) * usableWidth;
-    const y = paddingY + usableHeight - (p.pm25 / maxPm25) * usableHeight;
+    const y = baselineY - (Math.min(p.pm25, maxPm25) / maxPm25) * usableHeight;
     return { x, y, data: p, idx };
   });
 
@@ -131,7 +133,7 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
   }, '');
 
   const areaD = pointsCoords.length > 0
-    ? `${lineD} L ${pointsCoords[pointsCoords.length - 1].x} ${chartHeight - paddingY} L ${pointsCoords[0].x} ${chartHeight - paddingY} Z`
+    ? `${lineD} L ${pointsCoords[pointsCoords.length - 1].x} ${baselineY} L ${pointsCoords[0].x} ${baselineY} Z`
     : '';
 
   // Ventilation window index (typically index 3 = 2 PM)
@@ -499,9 +501,9 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
             viewBox={`0 0 ${chartWidth} ${chartHeight}`} 
             className="w-full h-auto min-w-[540px] max-w-full overflow-visible"
           >
-            {/* Horizontal Grid lines */}
-            {[0, 100, 200, 300].map((val) => {
-              const y = paddingY + usableHeight - (val / maxPm25) * usableHeight;
+            {/* Horizontal Grid lines 0 to 500 */}
+            {[0, 100, 200, 300, 400, 500].map((val) => {
+              const y = baselineY - (val / maxPm25) * usableHeight;
               return (
                 <g key={val}>
                   <line 
@@ -621,10 +623,10 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
                     {pt.data.pm25}
                   </text>
 
-                  {/* X-Axis Time Label below */}
+                  {/* X-Axis Time Label below baseline */}
                   <text
                     x={pt.x}
-                    y={chartHeight - paddingY + 16}
+                    y={baselineY + 18}
                     textAnchor="middle"
                     fontSize="10"
                     fontFamily="monospace"

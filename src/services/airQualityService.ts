@@ -476,8 +476,8 @@ export function getCityVisual(cityName: string): CityVisual {
   if (norm.includes('hyderabad')) {
     return {
       imagePath: '/cities/hyderabad.jpg',
-      photoCredit: 'Photo: Charminar & Historic Hub, Hyderabad by Pradeep Kumar / Unsplash',
-      landmark: 'Charminar & Hussain Sagar'
+      photoCredit: 'Photo: Historic Charminar Monument, Hyderabad (Wikimedia Commons CC)',
+      landmark: 'Charminar & Old City Heritage Corridor'
     };
   }
   if (norm.includes('pune')) {
@@ -497,8 +497,8 @@ export function getCityVisual(cityName: string): CityVisual {
   if (norm.includes('surat')) {
     return {
       imagePath: '/cities/surat.jpg',
-      photoCredit: 'Photo: Surat Industrial & Coastal Hub on Unsplash',
-      landmark: 'Tapi Riverfront & Diamond Corridor'
+      photoCredit: 'Photo: Tapi River Cable-Stayed Bridge, Surat (Wikimedia Commons CC)',
+      landmark: 'Tapi Riverfront Cable Bridge & Diamond City'
     };
   }
   if (norm.includes('lucknow')) {
@@ -511,8 +511,8 @@ export function getCityVisual(cityName: string): CityVisual {
   if (norm.includes('kanpur')) {
     return {
       imagePath: '/cities/kanpur.jpg',
-      photoCredit: 'Photo: Ganga Barrage & Industrial Belt on Unsplash',
-      landmark: 'Ganga Barrage & Industrial Belt'
+      photoCredit: 'Photo: Historic Kanpur Central Heritage Landmark (Wikimedia Commons CC)',
+      landmark: 'Kanpur Central & Ganga Industrial Corridor'
     };
   }
   if (norm.includes('varanasi')) {
@@ -560,8 +560,8 @@ export function getCityVisual(cityName: string): CityVisual {
   if (norm.includes('bhopal')) {
     return {
       imagePath: '/cities/bhopal.jpg',
-      photoCredit: 'Photo: Upper Lake, Bhopal by Unsplash',
-      landmark: 'Upper Lake & Central Malwa Basin'
+      photoCredit: 'Photo: Upper Lake (Bhojtal), Bhopal (Wikimedia Commons CC)',
+      landmark: 'Upper Lake (Bhojtal) & Raja Bhoj Basin'
     };
   }
   if (norm.includes('indore')) {
