@@ -1002,3 +1002,51 @@ export function getFallbackData(city: CityPreset, errorMessage?: string): AirQua
     errorMessage: errorMessage || 'Live data unavailable for this city right now'
   };
 }
+
+// Micro-meteorological live 1-second background telemetry jitter engine
+export function applyLiveTelemetryJitter(currentData: AirQualityData, tick: number): AirQualityData {
+  // Realistic atmospheric turbulence fluctuations (±0.2 to 0.6 µg/m³)
+  const deltaPm25 = Math.sin(tick * 0.7) * 0.45 + (Math.random() * 0.3 - 0.15);
+  const deltaPm10 = Math.cos(tick * 0.5) * 0.65 + (Math.random() * 0.4 - 0.2);
+  const deltaNo2 = Math.sin(tick * 0.3) * 0.25 + (Math.random() * 0.2 - 0.1);
+  const deltaOzone = Math.cos(tick * 0.4) * 0.35 + (Math.random() * 0.2 - 0.1);
+
+  const newPm25 = Math.max(2, Math.round((currentData.pm25 + deltaPm25) * 10) / 10);
+  const newPm10 = Math.max(5, Math.round((currentData.pm10 + deltaPm10) * 10) / 10);
+  const newNo2 = Math.max(2, Math.round((currentData.no2 + deltaNo2) * 10) / 10);
+  const newOzone = Math.max(2, Math.round((currentData.ozone + deltaOzone) * 10) / 10);
+
+  // Approximate proportional AQI adjustment
+  const ratio = newPm25 / (currentData.pm25 || 1);
+  const newAqi = Math.max(10, Math.min(500, Math.round(currentData.aqi * (0.97 + ratio * 0.03))));
+  const { category, color } = getAQICategory(newAqi);
+
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
+  const dateStr = now.toISOString().split('T')[0];
+
+  // Update latest hourly observation with live jitter
+  const updatedHourly = currentData.hourly.map((h, i) => {
+    if (i === 0) {
+      return {
+        ...h,
+        pm25: Math.round(newPm25),
+        aqi: newAqi
+      };
+    }
+    return h;
+  });
+
+  return {
+    ...currentData,
+    aqi: newAqi,
+    category,
+    color,
+    pm25: newPm25,
+    pm10: newPm10,
+    no2: newNo2,
+    ozone: newOzone,
+    hourly: updatedHourly,
+    timestamp: `${dateStr} ${timeStr}`
+  };
+}

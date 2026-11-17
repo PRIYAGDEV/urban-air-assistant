@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wind, MapPin, AlertTriangle, Code, ChevronDown } from 'lucide-react';
+import { Wind, MapPin, AlertTriangle, ChevronDown, Radio } from 'lucide-react';
 import { AirQualityData, CityPreset } from '../types';
 import { CITY_PRESETS } from '../services/airQualityService';
 
@@ -7,12 +7,18 @@ interface HeaderProps {
   airData: AirQualityData;
   selectedCity: CityPreset;
   onCityChange: (city: CityPreset) => void;
+  isLiveStream?: boolean;
+  onToggleLiveStream?: () => void;
+  packetCount?: number;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   airData,
   selectedCity,
   onCityChange,
+  isLiveStream = true,
+  onToggleLiveStream,
+  packetCount = 1,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-[#DBEAFE] px-4 lg:px-8 py-3 shadow-xs">
@@ -50,6 +56,37 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right Station Controls */}
         <div className="flex items-center flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto justify-end">
+          {/* Live 1-Second Streaming Indicator Button */}
+          <button
+            type="button"
+            onClick={onToggleLiveStream}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-mono font-bold transition-all shadow-xs cursor-pointer ${
+              isLiveStream
+                ? 'bg-[#F0FDF4] hover:bg-[#DCFCE7] border-[#86EFAC] text-[#166534]'
+                : 'bg-[#FFFBEB] hover:bg-[#FEF3C7] border-[#FDE68A] text-[#92400E]'
+            }`}
+            title="Click to toggle 1s background telemetry auto-refresh"
+          >
+            <span className="relative flex h-2 w-2">
+              <span
+                className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                  isLiveStream ? 'animate-heartbeat-1s bg-emerald-500' : 'bg-amber-500'
+                }`}
+              />
+              <span
+                className={`relative inline-flex rounded-full h-2 w-2 ${
+                  isLiveStream ? 'bg-emerald-600' : 'bg-amber-600'
+                }`}
+              />
+            </span>
+            <span className="hidden md:inline">
+              {isLiveStream ? `1s LIVE AUTO-REFRESH (#${packetCount})` : 'AUTO-REFRESH PAUSED'}
+            </span>
+            <span className="md:hidden">
+              {isLiveStream ? `1s (#${packetCount})` : 'PAUSED'}
+            </span>
+          </button>
+
           {/* Quick Station Dropdown */}
           <div className="relative flex items-center bg-[#F8FAFC] hover:bg-[#F1F5F9] rounded-lg border border-[#DBEAFE] px-3 py-1.5 text-xs transition-colors">
             <MapPin className="w-3.5 h-3.5 text-[#1E40AF] mr-1.5 shrink-0" />
@@ -59,7 +96,7 @@ export const Header: React.FC<HeaderProps> = ({
                 const found = CITY_PRESETS.find((c) => c.name === e.target.value);
                 if (found) onCityChange(found);
               }}
-              className="bg-transparent text-[#1E3A8A] font-semibold focus:outline-none cursor-pointer appearance-none pr-5 text-xs font-sans max-w-[200px] truncate"
+              className="bg-transparent text-[#1E3A8A] font-semibold focus:outline-none cursor-pointer appearance-none pr-5 text-xs font-sans max-w-[180px] truncate"
               aria-label="Select City Monitor"
             >
               <optgroup label="Top Indian Metros">
@@ -89,23 +126,11 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Thermal Inversion Status */}
           {airData.thermalInversionActive && (
-            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] text-xs font-mono font-semibold">
+            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] text-xs font-mono font-semibold">
               <AlertTriangle className="w-3.5 h-3.5 text-[#D97706] shrink-0" />
-              <span>INVERSION (BLH &lt; 300m)</span>
+              <span>INVERSION</span>
             </div>
           )}
-
-          {/* GitHub Link */}
-          <a
-            href="https://github.com/PRIYAGDEV/urban-air-assistant"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono bg-white text-[#475569] border border-[#DBEAFE] hover:bg-[#F8FAFC] hover:text-[#1E3A8A] transition-colors"
-            title="View Public GitHub Repository"
-          >
-            <Code className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Repo</span>
-          </a>
         </div>
       </div>
     </header>

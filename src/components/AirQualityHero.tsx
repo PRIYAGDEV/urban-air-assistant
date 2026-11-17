@@ -8,7 +8,8 @@ import {
   Info,
   Camera,
   MapPin,
-  ChevronRight
+  ChevronRight,
+  Radio
 } from 'lucide-react';
 import { AirQualityData, UserProfile, CityPreset } from '../types';
 import { calculateOERI } from '../services/decisionEngine';
@@ -18,6 +19,7 @@ interface AirQualityHeroProps {
   airData: AirQualityData;
   profile: UserProfile;
   onCitySelect?: (city: CityPreset) => void;
+  motionPhotosEnabled?: boolean;
 }
 
 // Smooth numerical count-up hook for cinematic telemetry transitions
@@ -48,7 +50,12 @@ function useCountUp(target: number, duration: number = 650): number {
   return current;
 }
 
-export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile, onCitySelect }) => {
+export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ 
+  airData, 
+  profile, 
+  onCitySelect,
+  motionPhotosEnabled = true
+}) => {
   const oeri = calculateOERI(airData, profile);
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
   const visual = getCityVisual(airData.city);
@@ -137,22 +144,30 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
     'Bengaluru',
     'Varanasi',
     'Jaipur',
+    'Srinagar',
     'Tokyo',
     'London',
     'New York',
-    'Paris'
+    'Paris',
+    'Dubai'
   ].map(name => CITY_PRESETS.find(c => c.name === name)).filter(Boolean) as CityPreset[];
 
   return (
     <div className="space-y-6">
       {/* 1. Full-Width Real Photo Banner Hero with Cinematic Motion & Dark Overlay */}
       <div className="relative rounded-xl overflow-hidden border border-[#DBEAFE] shadow-sm min-h-[380px] sm:min-h-[420px] flex flex-col justify-between group">
-        {/* Dynamic Location-Specific Smog Photo Background with Slow Cinematic Ken Burns Motion */}
+        {/* Dynamic Location-Specific Smog Photo Background with Multi-Axis Living Camera Motion */}
         <div 
           key={visual.imagePath}
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-1000 ease-out animate-ken-burns scale-105"
+          className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-1000 ease-out scale-105 ${
+            motionPhotosEnabled ? 'animate-motion-photo' : 'animate-ken-burns'
+          }`}
           style={{ backgroundImage: `url('${visual.imagePath}')` }}
         />
+        {/* Atmospheric Smog & Particulate Mist Drift Overlay */}
+        {motionPhotosEnabled && (
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-haze pointer-events-none" />
+        )}
         {/* Contrast Overlay for High Legibility */}
         <div className="absolute inset-0 bg-slate-900/80 backdrop-contrast-125" />
 
@@ -184,7 +199,7 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
                   DEMO DATA • SENSOR OFFLINE
                 </span>
               ) : (
-                <span className="px-2.5 py-1 rounded-lg bg-[#16A34A] text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <span className="px-2.5 py-1 rounded-lg bg-[#16A34A] text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xs">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-300" />
@@ -271,19 +286,25 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
             </div>
           </div>
 
-          {/* City Vistas Quick Photo Switcher Bar inside Hero */}
+          {/* Living Motion Photos of Cities Reel inside Hero */}
           {onCitySelect && (
-            <div className="border-t border-white/15 pt-3 mb-2">
+            <div className="border-t border-white/15 pt-3.5 mb-2">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                  <Camera className="w-3.5 h-3.5 text-[#60A5FA]" />
-                  <span>City Vistas (तस्वीरें बदलें):</span>
-                </span>
-                <span className="text-[10px] font-mono text-slate-400">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono uppercase tracking-wider text-slate-200 font-bold flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5 text-[#60A5FA]" />
+                    <span>Motion Photos of Cities (शहरों की लाइव मोशन तस्वीरें):</span>
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 font-bold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                    LIVE MOTION
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">
                   Click to switch live vista
                 </span>
               </div>
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+              <div className="flex items-center gap-2.5 overflow-x-auto pb-1.5 scrollbar-none">
                 {featuredVistas.map((vistaCity) => {
                   const isCurrent = vistaCity.name === airData.city;
                   const vistaVis = getCityVisual(vistaCity.name);
@@ -292,24 +313,40 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
                       key={`hero-vista-${vistaCity.name}`}
                       type="button"
                       onClick={() => onCitySelect(vistaCity)}
-                      className={`group/vista relative h-12 w-28 rounded-lg overflow-hidden border shrink-0 transition-all duration-200 text-left ${
+                      className={`group/vista relative h-16 w-36 rounded-xl overflow-hidden border shrink-0 transition-all duration-300 text-left ${
                         isCurrent 
-                          ? 'border-white ring-2 ring-[#3B82F6] scale-102' 
-                          : 'border-white/30 hover:border-white opacity-75 hover:opacity-100 hover:scale-105'
+                          ? 'border-white ring-2 ring-[#3B82F6] scale-102 shadow-md' 
+                          : 'border-white/30 hover:border-white opacity-85 hover:opacity-100 hover:scale-105'
                       }`}
                     >
+                      {/* Living Motion Photo with Multi-Axis Drift */}
                       <img 
                         src={vistaVis.imagePath} 
                         alt={vistaCity.name} 
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover/vista:scale-115"
+                        className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 ${
+                          motionPhotosEnabled ? 'animate-motion-photo group-hover/vista:scale-115' : 'group-hover/vista:scale-110'
+                        }`}
                         loading="lazy"
                       />
-                      <div className="absolute inset-0 bg-slate-950/60 group-hover/vista:bg-slate-950/40 transition-colors" />
-                      <div className="absolute inset-x-1.5 bottom-1 z-10">
-                        <span className="text-[10px] font-bold text-white block truncate drop-shadow-xs font-sans">
+                      {/* Atmospheric Mist Drift */}
+                      {motionPhotosEnabled && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent animate-haze pointer-events-none" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-900/40 to-transparent" />
+                      <div className="absolute inset-x-2 bottom-1.5 z-10 flex flex-col justify-end">
+                        <span className="text-xs font-bold text-white block truncate drop-shadow-xs font-sans leading-tight">
                           {vistaCity.name}
                         </span>
+                        <span className="text-[9px] font-mono text-slate-300 truncate">
+                          {vistaVis.landmark.split('&')[0]}
+                        </span>
                       </div>
+                      {/* Active Indicator */}
+                      {isCurrent && (
+                        <span className="absolute top-1 right-1.5 bg-[#1E40AF] text-white text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shadow-xs z-10">
+                          ACTIVE
+                        </span>
+                      )}
                     </button>
                   );
                 })}

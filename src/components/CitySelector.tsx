@@ -248,10 +248,10 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
                     ? 'bg-white text-[#1E40AF] shadow-xs border border-[#DBEAFE]'
                     : 'text-[#64748B] hover:text-[#1E3A8A]'
                 }`}
-                title="View with City Photos"
+                title="View with Living Motion City Photos"
               >
-                <Camera className="w-3 h-3" />
-                <span>Photos (तस्वीरें)</span>
+                <Camera className="w-3 h-3 text-[#3B82F6]" />
+                <span>Motion Photos (मोशन तस्वीरें)</span>
               </button>
               <button
                 type="button"
@@ -297,7 +297,7 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
           </div>
         </div>
 
-        {/* 1. Visual City Photo Cards Mode (Photos of Cities with Motion) */}
+        {/* 1. Visual City Photo Cards Mode (Living Motion Photos of Cities) */}
         {viewMode === 'photos' && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 animate-fade-up">
             {displayCities.map((city) => {
@@ -308,21 +308,32 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
                   key={`photo-card-${city.name}-${city.country}`}
                   type="button"
                   onClick={() => handleSelectCity(city)}
-                  className={`group relative h-24 sm:h-28 rounded-xl overflow-hidden border text-left transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md ${
+                  className={`group relative h-28 sm:h-32 rounded-xl overflow-hidden border text-left transition-all duration-300 transform hover:-translate-y-1 hover:shadow-md ${
                     isSelected
                       ? 'border-[#1E40AF] ring-2 ring-[#3B82F6] shadow-sm'
                       : 'border-[#DBEAFE] hover:border-[#93C5FD]'
                   }`}
                 >
-                  {/* City Background Photo with Smooth Hover Zoom */}
+                  {/* Living Motion Photo with Multi-Axis Pan & Zoom Drift */}
                   <img
                     src={visual.imagePath}
                     alt={city.name}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+                    className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-115 ${
+                      isSelected ? 'animate-motion-photo' : 'group-hover:animate-motion-photo'
+                    }`}
                     loading="lazy"
                   />
-                  {/* Film-inspired Dark Contrast Overlay */}
+                  {/* Atmospheric Smog Drift Sweep */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-haze pointer-events-none" />
+                  
+                  {/* Dark Contrast Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/40 to-transparent" />
+
+                  {/* Motion Tag Badge */}
+                  <span className="absolute top-1.5 left-1.5 text-[8px] font-mono px-1.5 py-0.5 rounded bg-black/60 text-white/90 border border-white/20 flex items-center gap-1 z-10">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                    MOTION
+                  </span>
 
                   {/* Active Indicator Badge */}
                   {isSelected && (
