@@ -95,6 +95,105 @@ export function getAQICategory(aqi: number): { category: AQICategory; color: str
   return { category: 'Hazardous', color: '#7C3AED' };
 }
 
+export interface CityVisual {
+  imagePath: string;
+  photoCredit: string;
+  landmark: string;
+}
+
+export function getCityVisual(cityName: string): CityVisual {
+  const norm = (cityName || '').toLowerCase();
+  if (norm.includes('delhi')) {
+    return {
+      imagePath: '/cities/delhi.jpg',
+      photoCredit: 'Photo: India Gate winter smog, Delhi by Ashish Kushwaha / Unsplash',
+      landmark: 'India Gate & Central Vista'
+    };
+  }
+  if (norm.includes('mumbai')) {
+    return {
+      imagePath: '/cities/mumbai.jpg',
+      photoCredit: 'Photo: Gateway of India & Coastal Skyline by Hardik Joshi / Unsplash',
+      landmark: 'Gateway of India & Marine Drive'
+    };
+  }
+  if (norm.includes('bengaluru') || norm.includes('bangalore')) {
+    return {
+      imagePath: '/cities/bengaluru.jpg',
+      photoCredit: 'Photo: Vidhana Soudha, Bengaluru by Naveen / Unsplash',
+      landmark: 'Vidhana Soudha & Central Corridor'
+    };
+  }
+  if (norm.includes('chennai')) {
+    return {
+      imagePath: '/cities/chennai.jpg',
+      photoCredit: 'Photo: Chennai Central & Marina Skyline by Balaji Srinivasan / Unsplash',
+      landmark: 'Chennai Central & Marina Bay'
+    };
+  }
+  if (norm.includes('kolkata')) {
+    return {
+      imagePath: '/cities/kolkata.jpg',
+      photoCredit: 'Photo: Howrah Bridge over Hooghly, Kolkata by Anirban Ghosh / Unsplash',
+      landmark: 'Howrah Bridge & Hooghly Basin'
+    };
+  }
+  if (norm.includes('hyderabad')) {
+    return {
+      imagePath: '/cities/hyderabad.jpg',
+      photoCredit: 'Photo: Charminar & Historic Hub, Hyderabad by Pradeep Kumar / Unsplash',
+      landmark: 'Charminar & Hussain Sagar'
+    };
+  }
+  if (norm.includes('pune')) {
+    return {
+      imagePath: '/cities/pune.jpg',
+      photoCredit: 'Photo: Western Ghats Valley & Pune Skyline on Unsplash',
+      landmark: 'Shaniwar Wada & Pune Valley'
+    };
+  }
+  if (norm.includes('ahmedabad')) {
+    return {
+      imagePath: '/cities/ahmedabad.jpg',
+      photoCredit: 'Photo: Sabarmati Riverfront, Ahmedabad by Bhargav Patel / Unsplash',
+      landmark: 'Sabarmati Riverfront & Atal Bridge'
+    };
+  }
+  if (norm.includes('lucknow')) {
+    return {
+      imagePath: '/cities/lucknow.jpg',
+      photoCredit: 'Photo: Rumi Darwaza & Heritage Lucknow on Unsplash',
+      landmark: 'Rumi Darwaza & Gomti Basin'
+    };
+  }
+  if (norm.includes('jaipur')) {
+    return {
+      imagePath: '/cities/jaipur.jpg',
+      photoCredit: 'Photo: Hawa Mahal, Jaipur by Annie Spratt / Unsplash',
+      landmark: 'Hawa Mahal & Amber Fort'
+    };
+  }
+  if (norm.includes('kanpur')) {
+    return {
+      imagePath: '/cities/kanpur.jpg',
+      photoCredit: 'Photo: Indo-Gangetic Basin Corridor, Kanpur on Unsplash',
+      landmark: 'Ganga Barrage & Industrial Corridor'
+    };
+  }
+  if (norm.includes('patna')) {
+    return {
+      imagePath: '/cities/patna.jpg',
+      photoCredit: 'Photo: Ganges Floodplain & Riverfront, Patna on Unsplash',
+      landmark: 'Golghar & Ganga Floodplain'
+    };
+  }
+  return {
+    imagePath: '/cities/delhi.jpg',
+    photoCredit: 'Photo: Delhi winter smog by Ashish Kushwaha / Unsplash',
+    landmark: 'Metropolitan Air Monitoring Zone'
+  };
+}
+
 // Calculate geographical distance in km using Haversine formula
 export function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth radius in km

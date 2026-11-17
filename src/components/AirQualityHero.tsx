@@ -5,10 +5,12 @@ import {
   Clock, 
   ShieldAlert, 
   AlertTriangle,
-  Info
+  Info,
+  Camera
 } from 'lucide-react';
 import { AirQualityData, UserProfile } from '../types';
 import { calculateOERI } from '../services/decisionEngine';
+import { getCityVisual } from '../services/airQualityService';
 
 interface AirQualityHeroProps {
   airData: AirQualityData;
@@ -18,6 +20,7 @@ interface AirQualityHeroProps {
 export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile }) => {
   const oeri = calculateOERI(airData, profile);
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
+  const visual = getCityVisual(airData.city);
 
   // Pollutant WHO limits
   const pollutants = [
@@ -89,10 +92,10 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
     <div className="space-y-6">
       {/* 1. Full-Width Real Photo Banner Hero with Overlay */}
       <div className="relative rounded-xl overflow-hidden border border-[#DBEAFE] shadow-sm min-h-[360px] sm:min-h-[400px] flex flex-col justify-between">
-        {/* Smog Photo Background with Darker Readable Overlay */}
+        {/* Dynamic Location-Specific Smog Photo Background with Darker Readable Overlay */}
         <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url('/delhi-smog.jpg')` }}
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-700 ease-out"
+          style={{ backgroundImage: `url('${visual.imagePath}')` }}
         />
         <div className="absolute inset-0 bg-slate-900/75 backdrop-contrast-125" />
 
@@ -110,6 +113,9 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
               <h1 className="text-2xl sm:text-3xl font-serif font-bold text-white mt-1">
                 {airData.city}, <span className="font-normal text-slate-300">{airData.country}</span>
               </h1>
+              <p className="text-xs font-mono text-[#93C5FD] mt-0.5">
+                Station Landmark: {visual.landmark}
+              </p>
             </div>
 
             {/* Inversion Badge & Timestamp */}
@@ -201,10 +207,15 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({ airData, profile
             </div>
           </div>
 
-          {/* Photo Credit line */}
-          <div className="text-[11px] font-mono text-slate-400 border-t border-white/10 pt-2 flex items-center justify-between">
-            <span>Photo: Delhi winter smog by Ashish Kushwaha / Unsplash</span>
-            <span>Boundary Layer: ~{airData.boundaryLayerHeight}m • Wind: {airData.windSpeed} km/h</span>
+          {/* Photo Credit line & Landmark */}
+          <div className="text-[11px] font-mono text-slate-300 border-t border-white/10 pt-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+            <div className="flex items-center gap-1.5">
+              <Camera className="w-3.5 h-3.5 text-[#93C5FD] shrink-0" />
+              <span>{visual.photoCredit}</span>
+            </div>
+            <div className="text-slate-400">
+              Landmark: <strong className="text-white">{visual.landmark}</strong> • Boundary Layer: ~{airData.boundaryLayerHeight}m • Wind: {airData.windSpeed} km/h
+            </div>
           </div>
         </div>
       </div>
