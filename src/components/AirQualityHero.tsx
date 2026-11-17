@@ -27,7 +27,7 @@ interface AirQualityHeroProps {
 
 // Hindi diurnal period label mapper:
 // 4 AM-11 AM: सुबह (Morning), 12 PM-4 PM: दोपहर (Afternoon), 5 PM-6 PM: शाम (Evening), 7 PM-3 AM: रात (Night)
-function getHindiPeriodLabel(timeStrOrLabel: string): string {
+export function getHindiPeriodLabel(timeStrOrLabel: string): string {
   let hour = -1;
   const match = timeStrOrLabel.match(/(\d+)\s*(AM|PM)/i);
   if (match) {
