@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Navigation, MapPin, X, AlertTriangle, Loader2, Check } from 'lucide-react';
+import { Search, Navigation, MapPin, X, AlertTriangle, Loader2, Check, Globe } from 'lucide-react';
 import { CityPreset } from '../types';
 import { CITY_PRESETS, findNearestCity } from '../services/airQualityService';
 
@@ -22,6 +22,7 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [geoLocating, setGeoLocating] = useState(false);
   const [geoMessage, setGeoMessage] = useState<string | null>(null);
+  const [activeChipRegion, setActiveChipRegion] = useState<'india' | 'world'>('india');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -35,9 +36,10 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filteredCities = CITY_PRESETS.filter((c) =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase().trim())
-  );
+  const filteredCities = CITY_PRESETS.filter((c) => {
+    const q = searchQuery.toLowerCase().trim();
+    return c.name.toLowerCase().includes(q) || c.country.toLowerCase().includes(q);
+  });
 
   const handleSelectCity = (city: CityPreset) => {
     onCitySelect(city);
@@ -60,7 +62,7 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
         const { latitude, longitude } = pos.coords;
         const { city, distanceKm } = findNearestCity(latitude, longitude);
         setGeoLocating(false);
-        setGeoMessage(`Matched nearest station: ${city.name} (~${distanceKm} km away)`);
+        setGeoMessage(`Matched nearest station: ${city.name}, ${city.country} (~${distanceKm} km away)`);
         onCitySelect(city);
         setTimeout(() => setGeoMessage(null), 5000);
       },
@@ -68,7 +70,7 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
         setGeoLocating(false);
         let msg = 'Unable to retrieve location.';
         if (err.code === err.PERMISSION_DENIED) {
-          msg = 'Location permission denied. Please select from the city hubs below.';
+          msg = 'Location permission denied. Please search or pick a city below.';
         } else if (err.code === err.POSITION_UNAVAILABLE) {
           msg = 'GPS satellite position unavailable.';
         } else if (err.code === err.TIMEOUT) {
@@ -81,21 +83,28 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
     );
   };
 
+  // Top Indian hubs for quick chips
+  const indianQuickHubs = CITY_PRESETS.filter(c => c.country === 'India').slice(0, 16);
+  // Top world hubs for quick chips
+  const worldQuickHubs = CITY_PRESETS.filter(c => c.country !== 'India').slice(0, 12);
+
+  const displayChips = activeChipRegion === 'india' ? indianQuickHubs : worldQuickHubs;
+
   return (
     <div className="bg-white rounded-xl border border-[#DBEAFE] p-4 sm:p-5 shadow-xs space-y-4">
-      {/* Header bar with Hindi label */}
+      {/* Header bar with Hindi label & active status */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#DBEAFE]">
         <div className="flex items-center gap-2">
           <MapPin className="w-4 h-4 text-[#1E40AF]" />
           <h2 className="text-sm font-bold text-[#1E3A8A] uppercase font-sans">
-            Metropolitan Monitoring Station
+            Global &amp; Indian Monitoring Stations ({CITY_PRESETS.length} Cities)
           </h2>
-          <span className="text-xs font-medium text-[#475569] bg-[#E9EEF6] px-2 py-0.5 rounded-lg border border-[#DBEAFE]">
+          <span className="text-xs font-semibold text-[#475569] bg-[#E9EEF6] px-2 py-0.5 rounded-lg border border-[#DBEAFE]">
             शहर बदलें
           </span>
         </div>
         <div className="text-xs font-mono text-[#475569]">
-          Active: <strong className="text-[#1E40AF]">{selectedCity.name}</strong> ({selectedCity.lat.toFixed(2)}°N, {selectedCity.lon.toFixed(2)}°E)
+          Active: <strong className="text-[#1E40AF]">{selectedCity.name}, {selectedCity.country}</strong> ({selectedCity.lat.toFixed(2)}°, {selectedCity.lon.toFixed(2)}°)
         </div>
       </div>
 
@@ -114,7 +123,7 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
                 setIsDropdownOpen(true);
               }}
               onFocus={() => setIsDropdownOpen(true)}
-              placeholder="Search Indian metropolitan hubs (e.g. Delhi NCR, Mumbai, Kolkata)..."
+              placeholder="Search 60+ Indian & Global cities (e.g. Delhi NCR, Mumbai, New York, Tokyo, London, Varanasi)..."
               className="w-full bg-[#F8FAFC] border border-[#DBEAFE] focus:border-[#3B82F6] rounded-lg pl-9 pr-8 py-2.5 text-xs sm:text-sm text-[#1E3A8A] placeholder-[#94A3B8] focus:outline-none focus:ring-1 focus:ring-[#3B82F6] font-sans transition-all"
             />
             {searchQuery && (
@@ -134,14 +143,14 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
 
           {/* Autocomplete Dropdown */}
           {isDropdownOpen && (
-            <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white border border-[#DBEAFE] rounded-lg shadow-lg max-h-64 overflow-y-auto">
+            <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white border border-[#DBEAFE] rounded-lg shadow-lg max-h-72 overflow-y-auto">
               {filteredCities.length > 0 ? (
                 <div className="p-1">
                   {filteredCities.map((c) => {
                     const isSelected = c.name === selectedCity.name;
                     return (
                       <button
-                        key={c.name}
+                        key={`${c.name}-${c.country}`}
                         type="button"
                         onClick={() => handleSelectCity(c)}
                         className={`w-full text-left px-3.5 py-2.5 rounded-lg text-xs sm:text-sm flex items-center justify-between transition-colors ${
@@ -152,9 +161,9 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
                       >
                         <div className="flex items-center gap-2">
                           <MapPin className="w-3.5 h-3.5 text-[#3B82F6] shrink-0" />
-                          <span>{c.name}</span>
-                          <span className="text-[11px] font-mono text-[#475569]">
-                            ({c.lat.toFixed(2)}, {c.lon.toFixed(2)})
+                          <span className="font-semibold">{c.name}</span>
+                          <span className="text-[11px] font-mono text-[#64748B]">
+                            {c.country} ({c.lat.toFixed(2)}, {c.lon.toFixed(2)})
                           </span>
                         </div>
                         {isSelected && <Check className="w-4 h-4 text-[#1E40AF]" />}
@@ -195,18 +204,46 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
         </div>
       )}
 
-      {/* QUICK HUBS Chip Row with FLEX-WRAP - Never clipped, never cut off! */}
+      {/* Quick-Pick Chips Row with Region Toggle */}
       <div className="pt-1">
-        <div className="text-xs font-mono font-bold uppercase tracking-wider text-[#475569] mb-2 flex items-center gap-2">
-          <span>Quick Hubs (12 Metropolitan Cities):</span>
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#475569]">
+            Quick Hubs:
+          </span>
+          <div className="flex items-center gap-1 bg-[#F1F5F9] p-0.5 rounded-lg border border-[#DBEAFE]">
+            <button
+              type="button"
+              onClick={() => setActiveChipRegion('india')}
+              className={`px-2.5 py-1 rounded text-xs font-mono font-bold transition-all ${
+                activeChipRegion === 'india'
+                  ? 'bg-[#1E40AF] text-white shadow-xs'
+                  : 'text-[#475569] hover:text-[#1E3A8A]'
+              }`}
+            >
+              Indian Cities
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveChipRegion('world')}
+              className={`px-2.5 py-1 rounded text-xs font-mono font-bold transition-all flex items-center gap-1 ${
+                activeChipRegion === 'world'
+                  ? 'bg-[#1E40AF] text-white shadow-xs'
+                  : 'text-[#475569] hover:text-[#1E3A8A]'
+              }`}
+            >
+              <Globe className="w-3 h-3" />
+              <span>World Metros</span>
+            </button>
+          </div>
         </div>
 
+        {/* Chips with flex-wrap - Never clipped, never cut off */}
         <div className="flex flex-wrap items-center gap-2">
-          {CITY_PRESETS.map((city) => {
+          {displayChips.map((city) => {
             const isSelected = city.name === selectedCity.name;
             return (
               <button
-                key={city.name}
+                key={`${city.name}-${city.country}`}
                 type="button"
                 onClick={() => handleSelectCity(city)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-mono font-medium whitespace-nowrap transition-all border shrink-0 min-h-[38px] flex items-center gap-1.5 ${
@@ -232,7 +269,7 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
         <div className="bg-[#EFF6FF] border border-[#93C5FD] rounded-lg px-4 py-3 flex items-center justify-between text-xs font-mono text-[#1E40AF]">
           <div className="flex items-center gap-2.5">
             <Loader2 className="w-4 h-4 animate-spin text-[#1E40AF]" />
-            <span className="font-semibold">Fetching live air data for {selectedCity.name}…</span>
+            <span className="font-semibold">Fetching live air data for {selectedCity.name}, {selectedCity.country}…</span>
           </div>
           <span className="text-[11px] text-[#475569] hidden sm:inline">
             Connecting to Open-Meteo Air Quality Telemetry

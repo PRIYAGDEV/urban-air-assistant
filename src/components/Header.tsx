@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wind, MapPin, Key, AlertTriangle, Code, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { Wind, MapPin, AlertTriangle, Code, ChevronDown } from 'lucide-react';
 import { AirQualityData, CityPreset } from '../types';
 import { CITY_PRESETS } from '../services/airQualityService';
 
@@ -7,16 +7,12 @@ interface HeaderProps {
   airData: AirQualityData;
   selectedCity: CityPreset;
   onCityChange: (city: CityPreset) => void;
-  onOpenApiKeyModal: () => void;
-  hasApiKey: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   airData,
   selectedCity,
   onCityChange,
-  onOpenApiKeyModal,
-  hasApiKey,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-[#DBEAFE] px-4 lg:px-8 py-3 shadow-xs">
@@ -63,14 +59,30 @@ export const Header: React.FC<HeaderProps> = ({
                 const found = CITY_PRESETS.find((c) => c.name === e.target.value);
                 if (found) onCityChange(found);
               }}
-              className="bg-transparent text-[#1E3A8A] font-semibold focus:outline-none cursor-pointer appearance-none pr-5 text-xs font-sans"
+              className="bg-transparent text-[#1E3A8A] font-semibold focus:outline-none cursor-pointer appearance-none pr-5 text-xs font-sans max-w-[200px] truncate"
               aria-label="Select City Monitor"
             >
-              {CITY_PRESETS.map((c) => (
-                <option key={c.name} value={c.name} className="bg-white text-[#1E3A8A]">
-                  {c.name}, {c.country}
-                </option>
-              ))}
+              <optgroup label="Top Indian Metros">
+                {CITY_PRESETS.filter(c => c.country === 'India').slice(0, 15).map((c) => (
+                  <option key={c.name} value={c.name} className="bg-white text-[#1E3A8A]">
+                    {c.name}, India
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Other Indian Cities">
+                {CITY_PRESETS.filter(c => c.country === 'India').slice(15).map((c) => (
+                  <option key={c.name} value={c.name} className="bg-white text-[#1E3A8A]">
+                    {c.name}, India
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="World Metros">
+                {CITY_PRESETS.filter(c => c.country !== 'India').map((c) => (
+                  <option key={c.name} value={c.name} className="bg-white text-[#1E3A8A]">
+                    {c.name}, {c.country}
+                  </option>
+                ))}
+              </optgroup>
             </select>
             <ChevronDown className="w-3.5 h-3.5 text-[#475569] absolute right-2.5 pointer-events-none" />
           </div>
@@ -82,25 +94,6 @@ export const Header: React.FC<HeaderProps> = ({
               <span>INVERSION (BLH &lt; 300m)</span>
             </div>
           )}
-
-          {/* Gemini API Key */}
-          <button
-            type="button"
-            onClick={onOpenApiKeyModal}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono border transition-all ${
-              hasApiKey
-                ? 'bg-[#EFF6FF] text-[#1E40AF] border-[#93C5FD] font-semibold'
-                : 'bg-white text-[#475569] border-[#DBEAFE] hover:bg-[#F8FAFC]'
-            }`}
-            title="Configure Google Gemini API Key"
-          >
-            {hasApiKey ? (
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A]" />
-            ) : (
-              <Key className="w-3.5 h-3.5 text-[#475569]" />
-            )}
-            <span>{hasApiKey ? 'Gemini Active' : 'API Key'}</span>
-          </button>
 
           {/* GitHub Link */}
           <a

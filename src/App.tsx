@@ -13,7 +13,6 @@ import { PersonalizedTimeline } from './components/PersonalizedTimeline';
 import { DiyHacksGallery } from './components/DiyHacksGallery';
 import { ImpactCounterfactualSimulator } from './components/ImpactCounterfactualSimulator';
 import { AIAssistantChat } from './components/AIAssistantChat';
-import { ApiKeyModal } from './components/ApiKeyModal';
 import { 
   CalendarClock, 
   Activity, 
@@ -39,8 +38,7 @@ export const App: React.FC = () => {
   const [airData, setAirData] = useState<AirQualityData>(() => getFallbackData(selectedCity));
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<'timeline' | 'simulator' | 'diy' | 'chat'>('timeline');
-  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState<boolean>(false);
-  const [apiKey, setApiKey] = useState<string>(() => {
+  const [apiKey] = useState<string>(() => {
     return typeof window !== 'undefined' ? localStorage.getItem('gemini_api_key') || '' : '';
   });
 
@@ -84,14 +82,6 @@ export const App: React.FC = () => {
     };
   }, [selectedCity]);
 
-  const handleSaveApiKey = (key: string) => {
-    setApiKey(key);
-    if (typeof window !== 'undefined') {
-      if (key) localStorage.setItem('gemini_api_key', key);
-      else localStorage.removeItem('gemini_api_key');
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#1E3A8A] flex flex-col font-sans selection:bg-[#3B82F6] selection:text-white">
       {/* Top Header Deck */}
@@ -99,8 +89,6 @@ export const App: React.FC = () => {
         airData={airData}
         selectedCity={selectedCity}
         onCityChange={setSelectedCity}
-        onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
-        hasApiKey={Boolean(apiKey)}
       />
 
       {/* Main Container - Sections separated by 48px */}
@@ -226,14 +214,6 @@ export const App: React.FC = () => {
           </div>
         </div>
       </footer>
-
-      {/* Credentials Modal */}
-      <ApiKeyModal
-        isOpen={isApiKeyModalOpen}
-        onClose={() => setIsApiKeyModalOpen(false)}
-        currentKey={apiKey}
-        onSaveKey={handleSaveApiKey}
-      />
     </div>
   );
 };
