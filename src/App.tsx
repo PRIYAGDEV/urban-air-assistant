@@ -18,6 +18,7 @@ import { PersonalizedTimeline } from './components/PersonalizedTimeline';
 import { DiyHacksGallery } from './components/DiyHacksGallery';
 import { ImpactCounterfactualSimulator } from './components/ImpactCounterfactualSimulator';
 import { AIAssistantChat } from './components/AIAssistantChat';
+import { logger } from './utils/logger';
 import { 
   CalendarClock, 
   Activity, 
@@ -147,7 +148,7 @@ export const App: React.FC = () => {
         }
       })
       .catch((err) => {
-        console.error('Failed to load air data:', err);
+        logger.error('Failed to load air data:', err);
         if (isMounted) {
           const fallback = getFallbackData(selectedCity, 'Live data unavailable for this city right now');
           baseAirDataRef.current = fallback;

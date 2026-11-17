@@ -1,4 +1,5 @@
 import { AirQualityData, UserProfile } from '../types';
+import { logger } from '../utils/logger';
 
 const SYSTEM_INSTRUCTION = `You are AuraGuard AI, a compassionate, science-backed Urban Air Quality & Winter Smog Assistant.
 Your mission is to help families, vulnerable individuals, and communities navigate severe winter smog and urban air pollution safely, pragmatically, and with dignity.
@@ -67,7 +68,7 @@ Provide a personalized, actionable, science-based, and empathetic response. Incl
         if (text) return text;
       }
     } catch (err) {
-      console.warn('Gemini API call failed, switching to local intelligence fallback:', err);
+      logger.warn('Gemini API call failed, switching to local intelligence fallback:', err);
     }
   }
 

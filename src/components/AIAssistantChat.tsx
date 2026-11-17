@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { AirQualityData, UserProfile, ChatMessage } from '../types';
 import { askGemini } from '../services/geminiService';
+import { logger } from '../utils/logger';
 
 interface AIAssistantChatProps {
   airData: AirQualityData;
@@ -80,7 +81,7 @@ How can I assist your household right now? Feel free to ask about window ventila
         window.speechSynthesis.speak(utterance);
       }
     } catch (err) {
-      console.error('Chat error:', err);
+      logger.error('Chat error:', err);
     } finally {
       setLoading(false);
     }
