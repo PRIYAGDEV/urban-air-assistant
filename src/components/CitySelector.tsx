@@ -196,7 +196,7 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
                 setIsDropdownOpen(true);
               }}
               onFocus={() => setIsDropdownOpen(true)}
-              placeholder="Search 60+ Indian & Global cities (e.g. Delhi NCR, Mumbai, New York, Tokyo, London, Varanasi)..."
+              placeholder="Search 59 Indian & Global cities (e.g. Delhi NCR, Mumbai, New York, Tokyo, London, Varanasi)..."
               className="w-full bg-[#F8FAFC] border border-[#DBEAFE] focus:border-[#3B82F6] rounded-lg pl-9 pr-8 py-2.5 text-xs sm:text-sm text-[#1E3A8A] placeholder-[#94A3B8] focus:outline-none focus:ring-1 focus:ring-[#3B82F6] font-sans transition-all duration-200"
             />
             {searchQuery && (
@@ -407,8 +407,8 @@ export const CitySelector: React.FC<CitySelectorProps> = ({
                     <div className="text-white font-bold text-xs font-sans drop-shadow-xs flex items-center justify-between">
                       <span className="truncate">{city.name}</span>
                     </div>
-                    <div className="text-[10px] text-slate-300 font-mono truncate mt-0.5">
-                      {visual.landmark.split('&')[0]}
+                    <div className="text-[10px] text-slate-300 font-mono leading-tight line-clamp-2 mt-0.5">
+                      {visual.landmark.split('&')[0].trim()}
                     </div>
                   </div>
                 </button>

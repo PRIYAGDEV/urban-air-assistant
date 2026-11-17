@@ -37,6 +37,8 @@ export interface AirQualityData {
   lastFetchError?: string;
   weatherUnavailable?: boolean;
   weatherError?: string;
+  source?: string;
+  isLoading?: boolean;
 }
 
 export type HouseholdType = 

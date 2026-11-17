@@ -65,12 +65,12 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Right Station Controls */}
         <div className="flex items-center flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto justify-end">
           {/* Status Indicator Button */}
-          {airData.isDemoData ? (
+          {!airData.isLive || airData.isDemoData ? (
             <button
               type="button"
               onClick={onRetry}
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-mono font-bold transition-all shadow-xs cursor-pointer bg-[#FEF3C7] hover:bg-[#FDE68A] border-[#FDE68A] text-[#92400E]"
-              title="Demo data active — click to retry live Open-Meteo telemetry"
+              title="Demo data active — click to retry live satellite telemetry"
             >
               <span className="w-2 h-2 rounded-full bg-[#D97706]" />
               <span className="hidden md:inline">DEMO DATA — auto-refresh paused</span>

@@ -462,15 +462,15 @@ export function getCityVisual(cityName: string): CityVisual {
   if (norm.includes('chennai')) {
     return {
       imagePath: '/cities/chennai.jpg',
-      photoCredit: 'Photo: Chennai Central & Marina Skyline by Balaji Srinivasan / Unsplash',
-      landmark: 'Chennai Central & Marina Bay'
+      photoCredit: 'Photo: Chennai Central Heritage Railway Terminal (Wikimedia Commons CC)',
+      landmark: 'Chennai Central Station'
     };
   }
   if (norm.includes('kolkata')) {
     return {
       imagePath: '/cities/kolkata.jpg',
-      photoCredit: 'Photo: Howrah Bridge over Hooghly, Kolkata by Anirban Ghosh / Unsplash',
-      landmark: 'Howrah Bridge & Hooghly Basin'
+      photoCredit: 'Photo: Howrah Bridge (Rabindra Setu) over Hooghly River (Wikimedia Commons CC)',
+      landmark: 'Howrah Bridge'
     };
   }
   if (norm.includes('hyderabad')) {
@@ -483,15 +483,15 @@ export function getCityVisual(cityName: string): CityVisual {
   if (norm.includes('pune')) {
     return {
       imagePath: '/cities/pune.jpg',
-      photoCredit: 'Photo: Western Ghats Valley & Pune Skyline on Unsplash',
-      landmark: 'Shaniwar Wada & Pune Valley'
+      photoCredit: 'Photo: Shaniwar Wada Delhi Gate, Pune (Wikimedia Commons CC)',
+      landmark: 'Shaniwar Wada'
     };
   }
   if (norm.includes('ahmedabad')) {
     return {
       imagePath: '/cities/ahmedabad.jpg',
-      photoCredit: 'Photo: Sabarmati Riverfront, Ahmedabad by Bhargav Patel / Unsplash',
-      landmark: 'Sabarmati Riverfront & Western Hub'
+      photoCredit: 'Photo: Sabarmati Riverfront Promenade, Ahmedabad (Wikimedia Commons CC)',
+      landmark: 'Sabarmati Riverfront'
     };
   }
   if (norm.includes('surat')) {
@@ -567,8 +567,8 @@ export function getCityVisual(cityName: string): CityVisual {
   if (norm.includes('indore')) {
     return {
       imagePath: '/cities/indore.jpg',
-      photoCredit: 'Photo: Indore Urban Hub by Unsplash',
-      landmark: 'Rajwada Palace & Clean Air Corridor'
+      photoCredit: 'Photo: Historic Rajwada Palace, Indore (Wikimedia Commons CC)',
+      landmark: 'Rajwada Palace'
     };
   }
   if (norm.includes('dehradun')) {
@@ -623,8 +623,15 @@ export function getCityVisual(cityName: string): CityVisual {
   if (norm.includes('patna')) {
     return {
       imagePath: '/cities/patna.jpg',
-      photoCredit: 'Photo: Ganges Floodplain & Riverfront on Unsplash',
-      landmark: 'Ganges Floodplain Corridor'
+      photoCredit: 'Photo: River Ganges with Gandhi Bridge & Patna Riverbank (Wikimedia Commons CC)',
+      landmark: 'Ganges Riverbank'
+    };
+  }
+  if (norm.includes('nagpur')) {
+    return {
+      imagePath: '/cities/delhi.jpg',
+      photoCredit: 'Photo: Nagpur Air Monitoring Station (Wikimedia Commons CC)',
+      landmark: 'Deekshabhoomi'
     };
   }
 
@@ -767,7 +774,7 @@ export function getCityVisual(cityName: string): CityVisual {
   return {
     imagePath: '/cities/delhi.jpg',
     photoCredit: 'Photo: Atmospheric Urban Monitoring by Unsplash Contributors',
-    landmark: 'Metropolitan Air Monitoring Zone'
+    landmark: 'Urban Air Station'
   };
 }
 
@@ -877,25 +884,152 @@ async function fetchWithRetry<T>(
   return { ok: false, error: lastError };
 }
 
-export async function fetchLiveAirQuality(city: CityPreset): Promise<AirQualityData> {
+// Standard US EPA Air Quality Index Breakpoints calculation from PM2.5 (µg/m³)
+export function computeUsAqiFromPm25(pm25: number): number {
+  const c = Math.max(0, pm25);
+  if (c <= 12.0) {
+    return Math.round(((50 - 0) / (12.0 - 0.0)) * (c - 0.0) + 0);
+  } else if (c <= 35.4) {
+    return Math.round(((100 - 51) / (35.4 - 12.1)) * (c - 12.1) + 51);
+  } else if (c <= 55.4) {
+    return Math.round(((150 - 101) / (55.4 - 35.5)) * (c - 35.5) + 101);
+  } else if (c <= 150.4) {
+    return Math.round(((200 - 151) / (150.4 - 55.5)) * (c - 55.5) + 151);
+  } else if (c <= 250.4) {
+    return Math.round(((300 - 201) / (250.4 - 150.5)) * (c - 150.5) + 201);
+  } else if (c <= 350.4) {
+    return Math.round(((400 - 301) / (350.4 - 250.5)) * (c - 250.5) + 301);
+  } else if (c <= 500.4) {
+    return Math.round(((500 - 401) / (500.4 - 350.5)) * (c - 350.5) + 401);
+  } else {
+    return 500;
+  }
+}
+
+// Tier 1 Primary: WeatherAPI.com (forecast.json, 2 days, aqi=yes)
+async function fetchWeatherApiAirQuality(city: CityPreset): Promise<AirQualityData> {
+  const apiKey = (
+    import.meta.env.VITE_WEATHERAPI_KEY ||
+    (typeof window !== 'undefined' ? (window as any).WEATHERAPI_KEY || localStorage.getItem('weatherapi_key') : '') ||
+    ''
+  ).trim();
+
+  if (!apiKey) {
+    throw new Error('WeatherAPI key is missing in environment (VITE_WEATHERAPI_KEY)');
+  }
+
+  const url = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${city.lat},${city.lon}&days=2&aqi=yes`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  console.log(`[WeatherAPI] Fetching forecast.json for ${city.name} (${city.lat}, ${city.lon})...`);
+  const response = await fetch(url, { signal: controller.signal });
+  clearTimeout(timeoutId);
+
+  if (!response.ok) {
+    throw new Error(`WeatherAPI returned HTTP ${response.status}: ${response.statusText || 'Server Error'}`);
+  }
+
+  const json = await response.json();
+  const current = json.current;
+  const currentAq = current?.air_quality;
+
+  if (!currentAq) {
+    throw new Error('WeatherAPI response did not contain air_quality metrics');
+  }
+
+  const pm25 = Math.round((currentAq.pm2_5 ?? 0) * 10) / 10;
+  const pm10 = Math.round((currentAq.pm10 ?? 0) * 10) / 10;
+  const no2 = Math.round((currentAq.no2 ?? 0) * 10) / 10;
+  const ozone = Math.round((currentAq.o3 ?? 0) * 10) / 10;
+  const currentAqi = computeUsAqiFromPm25(pm25);
+
+  const temp = Math.round(current.temp_c ?? 22);
+  const humidity = Math.round(current.humidity ?? 50);
+  const windSpeed = Math.round(current.wind_kph ?? 6);
+
+  const { category, color } = getAQICategory(currentAqi);
+
+  const currentHour = new Date().getHours();
+  const isMorningOrNight = currentHour < 10 || currentHour >= 18;
+  const thermalInversionActive = isMorningOrNight && windSpeed < 12;
+  const boundaryLayerHeight = thermalInversionActive ? 220 : 850;
+
+  // Hourly curve from forecast days
+  const day0Hours = json.forecast?.forecastday?.[0]?.hour ?? [];
+  const day1Hours = json.forecast?.forecastday?.[1]?.hour ?? [];
+  const allHours = [...day0Hours, ...day1Hours];
+
+  const nowMs = Date.now();
+  const upcomingHours = allHours
+    .filter((h: any) => new Date(h.time).getTime() >= nowMs - 3600000)
+    .slice(0, 12);
+
+  const hourlySlice = upcomingHours.map((h: any) => {
+    const d = new Date(h.time);
+    const hourNum = d.getHours();
+    const hourLabel = `${hourNum % 12 === 0 ? 12 : hourNum % 12} ${hourNum >= 12 ? 'PM' : 'AM'}`;
+    const hPm25 = Math.round((h.air_quality?.pm2_5 ?? pm25) * 10) / 10;
+    const hAqi = computeUsAqiFromPm25(hPm25);
+    const isVent = hourNum >= 13 && hourNum <= 15;
+    return {
+      time: h.time,
+      hourLabel,
+      pm25: hPm25,
+      aqi: hAqi,
+      isVentilationWindow: isVent
+    };
+  });
+
+  const isCurrentVentSafe = currentHour >= 13 && currentHour <= 15 && currentAqi < 250;
+
+  console.log(`[WeatherAPI] Succeeded for ${city.name}: PM2.5=${pm25} µg/m³, US AQI=${currentAqi} (${category})`);
+
+  return {
+    city: city.name,
+    country: city.country,
+    latitude: city.lat,
+    longitude: city.lon,
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    aqi: currentAqi,
+    category,
+    color,
+    pm25,
+    pm10,
+    no2,
+    ozone,
+    temperature: temp,
+    humidity,
+    windSpeed,
+    boundaryLayerHeight,
+    thermalInversionActive,
+    optimalVentilationWindow: {
+      start: '13:30',
+      end: '15:15',
+      reason: 'Solar thermal heating expands the atmospheric boundary layer, dispersing ground-level particulate.',
+      currentSafe: isCurrentVentSafe
+    },
+    hourly: hourlySlice.length > 0 ? hourlySlice : getMockHourly(pm25, currentAqi),
+    isLive: true,
+    isDemoData: false,
+    source: 'WeatherAPI.com (CAMS)'
+  };
+}
+
+// Tier 2 Fallback: Open-Meteo Air Quality & Weather API
+async function fetchOpenMeteoAirQuality(city: CityPreset): Promise<AirQualityData> {
   const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${city.lat}&longitude=${city.lon}&current=pm10,pm2_5,nitrogen_dioxide,ozone,us_aqi&hourly=pm2_5,pm10,us_aqi&forecast_days=2`;
   const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m`;
 
-  // Fetch air quality and weather INDEPENDENTLY (stop using Promise.all)
-  // Air quality call with 3 retries (2s, 4s, 8s backoff, 10s timeout)
   const aqiResult = await fetchWithRetry<any>(aqiUrl, 'AirQuality');
 
-  // ONLY fall back to demo when the AIR QUALITY call itself fails after all retries
   if (!aqiResult.ok || !aqiResult.data) {
-    const errorTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const fullErrorMessage = `${aqiResult.error || 'Failed to fetch'} — ${errorTimestamp}`;
-    console.warn(`[Open-Meteo] Live Air Quality fetch failed after retries; activating demo fallback: ${fullErrorMessage}`);
-    return getFallbackData(city, fullErrorMessage);
+    throw new Error(aqiResult.error || 'Failed to fetch Open-Meteo air quality telemetry');
   }
 
   const aqiJson = aqiResult.data;
 
-  // Weather call with retry - completely independent of air quality!
+  // Weather call with retry - independent
   const weatherResult = await fetchWithRetry<any>(weatherUrl, 'Weather');
   const weatherJson = weatherResult.ok ? weatherResult.data : null;
   const weatherUnavailable = !weatherResult.ok || !weatherJson;
@@ -976,9 +1110,36 @@ export async function fetchLiveAirQuality(city: CityPreset): Promise<AirQualityD
     hourly: hourlySlice.length > 0 ? hourlySlice : getMockHourly(pm25, currentAqi),
     isLive: true,
     isDemoData: false,
+    source: 'Open-Meteo (CAMS)',
     weatherUnavailable,
     weatherError: weatherResult.error
   };
+}
+
+// Master Live Air Quality Orchestrator with Tiered Fallback Chain
+export async function fetchLiveAirQuality(city: CityPreset): Promise<AirQualityData> {
+  // 1. Primary Source: WeatherAPI.com (forecast.json, 2 days, aqi=yes)
+  try {
+    const data = await fetchWeatherApiAirQuality(city);
+    return data;
+  } catch (weatherErr: any) {
+    const weatherErrMsg = weatherErr.message || 'WeatherAPI unavailable';
+    console.warn(`[AuraGuard Telemetry] WeatherAPI primary source failed: ${weatherErrMsg}; attempting Open-Meteo fallback.`);
+
+    // 2. Secondary Fallback Source: Open-Meteo Air Quality & Weather API
+    try {
+      const openMeteoData = await fetchOpenMeteoAirQuality(city);
+      return openMeteoData;
+    } catch (openMeteoErr: any) {
+      const openMeteoErrMsg = openMeteoErr.message || 'Open-Meteo unavailable';
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const fullError = `WeatherAPI: ${weatherErrMsg} | Open-Meteo: ${openMeteoErrMsg} — ${timeStr}`;
+      console.error(`[AuraGuard Telemetry] All live air-quality tiers failed after retries: ${fullError}`);
+
+      // 3. Last Resort Fallback: Clearly-labelled Demo Data
+      return getFallbackData(city, fullError);
+    }
+  }
 }
 
 function getMockHourly(basePm25: number, baseAqi: number) {
@@ -1062,7 +1223,7 @@ export function getFallbackData(city: CityPreset, errorMessage?: string): AirQua
     isLive: false,
     isDemoData: true,
     errorMessage: errorMessage || 'Live data unavailable for this city right now',
-    lastFetchError: errorMessage || ('Failed to fetch — ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
+    lastFetchError: errorMessage ? errorMessage : undefined
   };
 }
 

@@ -22,6 +22,39 @@ interface AirQualityHeroProps {
   onCitySelect?: (city: CityPreset) => void;
   motionPhotosEnabled?: boolean;
   onRetry?: () => void;
+  loading?: boolean;
+}
+
+// Hindi diurnal period label mapper:
+// 4 AM-11 AM: सुबह (Morning), 12 PM-4 PM: दोपहर (Afternoon), 5 PM-6 PM: शाम (Evening), 7 PM-3 AM: रात (Night)
+function getHindiPeriodLabel(timeStrOrLabel: string): string {
+  let hour = -1;
+  const match = timeStrOrLabel.match(/(\d+)\s*(AM|PM)/i);
+  if (match) {
+    let h = parseInt(match[1], 10);
+    const meridiem = match[2].toUpperCase();
+    if (meridiem === 'PM' && h !== 12) h += 12;
+    if (meridiem === 'AM' && h === 12) h = 0;
+    hour = h;
+  } else if (timeStrOrLabel.includes('T') || timeStrOrLabel.includes('-')) {
+    const d = new Date(timeStrOrLabel);
+    if (!isNaN(d.getTime())) {
+      hour = d.getHours();
+    }
+  }
+
+  if (hour >= 4 && hour < 12) {
+    return 'सुबह (Morning)';
+  }
+  if (hour >= 12 && hour < 17) {
+    return 'दोपहर (Afternoon)';
+  }
+  if (hour >= 17 && hour < 19) {
+    // 5 PM and 6 PM
+    return 'शाम (Evening)';
+  }
+  // 7 PM, 8 PM, 9 PM, 10 PM, 11 PM, 12 AM - 3 AM
+  return 'रात (Night)';
 }
 
 // Smooth numerical count-up hook for cinematic telemetry transitions
@@ -57,7 +90,8 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
   profile, 
   onCitySelect,
   motionPhotosEnabled = true,
-  onRetry
+  onRetry,
+  loading = false,
 }) => {
   const oeri = calculateOERI(airData, profile);
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
@@ -199,7 +233,12 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
             {/* Live Inversion Radar Badge & Timestamp */}
             <div className="flex flex-col sm:items-end gap-1.5">
               <div className="flex flex-wrap items-center gap-2">
-                {airData.isDemoData ? (
+                {loading ? (
+                  <span className="px-2.5 py-1 rounded-lg bg-[#1E40AF] text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xs">
+                    <RefreshCw className="w-3 h-3 animate-spin text-white" />
+                    CONNECTING TO LIVE TELEMETRY…
+                  </span>
+                ) : (!airData.isLive || airData.isDemoData) ? (
                   <div className="flex items-center gap-1.5">
                     <span className="px-2.5 py-1 rounded-lg bg-[#DC2626] text-white text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xs">
                       <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
@@ -210,7 +249,7 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
                         type="button"
                         onClick={onRetry}
                         className="px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-white border border-white/30 text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
-                        title="Retry fetching live data from Open-Meteo"
+                        title="Retry fetching live data"
                       >
                         <RefreshCw className="w-3 h-3" />
                         <span>Retry live data</span>
@@ -223,7 +262,7 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-300" />
                     </span>
-                    LIVE TELEMETRY
+                    LIVE TELEMETRY {airData.source ? `• ${airData.source}` : ''}
                   </span>
                 )}
                 <span className="px-2.5 py-1 rounded-lg bg-black/40 text-slate-300 border border-white/20 text-xs font-mono">
@@ -698,7 +737,7 @@ export const AirQualityHero: React.FC<AirQualityHeroProps> = ({
                   >
                     <td className="py-2 px-3 font-bold">{pt.hourLabel}</td>
                     <td className="py-2 px-3">
-                      {idx < 2 ? 'सुबह (Morning)' : idx < 4 ? 'दोपहर (Afternoon)' : 'शाम (Evening)'}
+                      {getHindiPeriodLabel(pt.hourLabel || pt.time)}
                     </td>
                     <td className="py-2 px-3 metric-num">{pt.pm25} µg/m³</td>
                     <td className="py-2 px-3 metric-num">AQI {pt.aqi}</td>

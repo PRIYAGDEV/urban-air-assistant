@@ -47,7 +47,16 @@ export const App: React.FC = () => {
     return CITY_PRESETS[0]; // Default: Delhi NCR
   });
 
-  const [airData, setAirData] = useState<AirQualityData>(() => getFallbackData(selectedCity));
+  const [hasLoadedOnce, setHasLoadedOnce] = useState<boolean>(false);
+  const [airData, setAirData] = useState<AirQualityData>(() => {
+    const fb = getFallbackData(selectedCity);
+    return {
+      ...fb,
+      isDemoData: false, // Don't flag as demo on fresh load while connecting
+      isLive: false,
+      isLoading: true
+    };
+  });
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<'timeline' | 'simulator' | 'diy' | 'chat'>('timeline');
   const [apiKey] = useState<string>(() => {
@@ -116,12 +125,12 @@ export const App: React.FC = () => {
       localStorage.setItem('auraguard_selected_city', selectedCity.name);
     }
 
-    // Instant optimistic render from cache or fallback so UI updates instantly without blank screen
+    // Instant optimistic render from cache if available, or fallback if past initial load
     if (cityCacheRef.current[selectedCity.name]) {
       const cached = cityCacheRef.current[selectedCity.name];
       baseAirDataRef.current = cached;
       setAirData(cached);
-    } else {
+    } else if (hasLoadedOnce) {
       const initial = getFallbackData(selectedCity);
       baseAirDataRef.current = initial;
       setAirData(initial);
@@ -133,6 +142,7 @@ export const App: React.FC = () => {
           cityCacheRef.current[selectedCity.name] = data;
           baseAirDataRef.current = data;
           setAirData(data);
+          setHasLoadedOnce(true);
           setLoading(false);
         }
       })
@@ -142,6 +152,7 @@ export const App: React.FC = () => {
           const fallback = getFallbackData(selectedCity, 'Live data unavailable for this city right now');
           baseAirDataRef.current = fallback;
           setAirData(fallback);
+          setHasLoadedOnce(true);
           setLoading(false);
         }
       });
@@ -151,24 +162,34 @@ export const App: React.FC = () => {
     };
   }, [selectedCity]);
 
-  // Live 1-Second continuous background auto-refresh & telemetry stream engine
+  // Live 1-Second continuous background ticker & simulated telemetry engine
   useEffect(() => {
-    // Stop 1-second jitter on demo data — jitter only runs on verified live telemetry!
-    if (!isLiveStream || airData.isDemoData) return;
+    if (!isLiveStream) return;
 
     const interval = setInterval(() => {
       setPacketCount((prev) => {
         const nextTick = prev + 1;
         setAirData((prevData) => {
-          if (prevData.isDemoData) return prevData;
-          return applyLiveTelemetryJitter(prevData, nextTick);
+          if (!prevData) return prevData;
+          // When data is LIVE, do NOT jitter values: show exact received telemetry!
+          if (prevData.isLive && !prevData.isDemoData) {
+            return {
+              ...prevData,
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+            };
+          }
+          // Only run simulated jitter on demo data
+          if (prevData.isDemoData) {
+            return applyLiveTelemetryJitter(prevData, nextTick);
+          }
+          return prevData;
         });
         return nextTick;
       });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isLiveStream, airData.isDemoData]);
+  }, [isLiveStream]);
 
   // Periodic background re-anchor from Open-Meteo satellite API every 60 seconds
   useEffect(() => {
@@ -231,7 +252,7 @@ export const App: React.FC = () => {
         {/* Live 1-Second Auto-Refresh & Motion Photos Control Deck */}
         <div className="bg-white rounded-xl border border-[#DBEAFE] p-3 sm:p-4 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-3 animate-fade-up">
           <div className="flex items-center gap-2.5 flex-wrap">
-            {airData.isDemoData ? (
+            {!airData.isLive || airData.isDemoData ? (
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] text-xs font-mono font-bold shadow-2xs">
                 <span className="w-2 h-2 rounded-full bg-[#D97706]" />
                 <span>DEMO DATA — auto-refresh paused</span>
@@ -246,7 +267,7 @@ export const App: React.FC = () => {
                     isLiveStream ? 'bg-emerald-600' : 'bg-amber-600'
                   }`} />
                 </span>
-                <span>{isLiveStream ? '1s LIVE AUTO-REFRESH ACTIVE' : 'AUTO-REFRESH PAUSED'}</span>
+                <span>{isLiveStream ? `1s LIVE AUTO-REFRESH ACTIVE • ${airData.source || 'LIVE'}` : 'AUTO-REFRESH PAUSED'}</span>
               </div>
             )}
 
@@ -377,6 +398,7 @@ export const App: React.FC = () => {
             onCitySelect={setSelectedCity} 
             motionPhotosEnabled={motionPhotosEnabled}
             onRetry={handleManualRefresh}
+            loading={loading && !hasLoadedOnce}
           />
         </section>
 
@@ -477,7 +499,9 @@ export const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4 text-[#64748B] flex-wrap justify-center">
-            <span>Open-Meteo Air Quality &amp; CAMS European Telemetry</span>
+            <span>Air quality data: WeatherAPI.com (CAMS)</span>
+            <span>•</span>
+            <span>Open-Meteo Satellite Fallback</span>
             <span>•</span>
             <span>Zero-Cost Citizen Science</span>
           </div>
